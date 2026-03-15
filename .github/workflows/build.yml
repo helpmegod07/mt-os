@@ -16,7 +16,7 @@ jobs:
       run: |
         sudo apt-get update -qq
         sudo apt-get install -y debootstrap squashfs-tools xorriso \
-          grub-pc-bin grub-efi-ia32-bin rsync --no-install-recommends
+          grub-pc-bin grub-efi-ia32-bin rsync mtools --no-install-recommends
 
     - name: Bootstrap Debian i386
       run: |
