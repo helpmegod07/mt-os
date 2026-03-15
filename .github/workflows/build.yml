@@ -1,0 +1,74 @@
+name: Build MT-OS ISO
+
+on:
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+
+    steps:
+    - name: Checkout
+      uses: actions/checkout@v4
+
+    - name: Install build tools
+      run: |
+        sudo apt-get update -qq
+        sudo apt-get install -y debootstrap squashfs-tools xorriso \
+          grub-pc-bin grub-efi-ia32-bin rsync --no-install-recommends
+
+    - name: Bootstrap Debian i386
+      run: |
+        sudo mkdir -p /tmp/chroot
+        sudo debootstrap --arch=i386 --variant=minbase bullseye \
+          /tmp/chroot http://deb.debian.org/debian/
+
+    - name: Copy MT-OS files
+      run: |
+        sudo mkdir -p /tmp/chroot/mt-os-apps
+        sudo mkdir -p /tmp/chroot/mt-os-config
+        sudo mkdir -p /tmp/chroot/mt-os-services
+        sudo cp rootfs/mt-os-setup.sh /tmp/chroot/
+        sudo cp rootfs/mt-os-apps/* /tmp/chroot/mt-os-apps/
+        sudo cp rootfs/mt-os-config/autostart /tmp/chroot/mt-os-config/
+        sudo cp rootfs/mt-os-config/rc.xml /tmp/chroot/mt-os-config/
+        sudo cp rootfs/mt-os-config/menu.xml /tmp/chroot/mt-os-config/
+        sudo cp rootfs/mt-os-config/.bashrc /tmp/chroot/mt-os-config/
+        sudo cp rootfs/mt-os-config/set-wallpaper.sh /tmp/chroot/mt-os-config/
+        sudo cp rootfs/mt-os-services/* /tmp/chroot/mt-os-services/
+        sudo chmod +x /tmp/chroot/mt-os-setup.sh
+
+    - name: Run chroot setup
+      run: |
+        sudo mount --bind /dev     /tmp/chroot/dev
+        sudo mount --bind /dev/pts /tmp/chroot/dev/pts
+        sudo mount --bind /proc    /tmp/chroot/proc
+        sudo mount --bind /sys     /tmp/chroot/sys
+        sudo chroot /tmp/chroot /bin/bash /mt-os-setup.sh
+        for d in sys proc dev/pts dev; do sudo umount /tmp/chroot/$d 2>/dev/null||true; done
+
+    - name: Build squashfs
+      run: |
+        sudo mkdir -p /tmp/image/live
+        sudo mksquashfs /tmp/chroot /tmp/image/live/filesystem.squashfs \
+          -comp gzip -e boot -noappend -no-recovery
+
+    - name: Copy kernel and grub
+      run: |
+        sudo mkdir -p /tmp/image/boot/grub
+        sudo cp $(ls /tmp/chroot/boot/vmlinuz-* | head -1) /tmp/image/boot/vmlinuz
+        sudo cp $(ls /tmp/chroot/boot/initrd.img-* | head -1) /tmp/image/boot/initrd.img
+        sudo cp grub.cfg /tmp/image/boot/grub/grub.cfg
+
+    - name: Build ISO
+      run: |
+        sudo grub-mkrescue -o $HOME/MT-OS.iso /tmp/image
+        ls -lh $HOME/MT-OS.iso
+
+    - name: Upload ISO
+      uses: actions/upload-artifact@v4
+      with:
+        name: MT-OS
+        path: ~/MT-OS.iso
+        retention-days: 5
