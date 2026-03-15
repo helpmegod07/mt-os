@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<openbox_menu xmlns="http://openbox.org/3.4/menu">
+<menu id="root-menu" label="MT-OS">
+  <item label="Ghost Terminal"><action name="Execute"><command>python3 /opt/mt-os/mt-terminal.py</command></action></item>
+  <item label="AI Face"><action name="Execute"><command>python3 /opt/mt-os/mt-face.py</command></action></item>
+  <item label="Firefox"><action name="Execute"><command>firefox-esr</command></action></item>
+  <separator/>
+  <item label="Display Settings"><action name="Execute"><command>python3 /opt/mt-os/mt-display.py</command></action></item>
+  <item label="Ghost Commands"><action name="Execute"><command>python3 /opt/mt-os/mt-ghost-manager.py</command></action></item>
+  <item label="API Key"><action name="Execute"><command>xterm -e bash /opt/mt-os/mt-apikey.sh</command></action></item>
+  <item label="Install to Disk"><action name="Execute"><command>xterm -e bash /opt/mt-os/mt-install.sh</command></action></item>
+  <separator/>
+  <item label="Terminal"><action name="Execute"><command>xterm</command></action></item>
+  <item label="Reboot"><action name="Execute"><command>sudo reboot</command></action></item>
+  <item label="Shutdown"><action name="Execute"><command>sudo poweroff</command></action></item>
+</menu>
+</openbox_menu>
