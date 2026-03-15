@@ -1,0 +1,15 @@
+[Unit]
+Description=MT-OS Ghost AI
+After=network.target sound.target
+
+[Service]
+Type=simple
+User=ghost
+Environment=DISPLAY=:0
+EnvironmentFile=-/etc/mt-os/api.env
+ExecStart=/usr/bin/python3 /opt/mt-os/mt-face.py
+Restart=on-failure
+RestartSec=5
+
+[Install]
+WantedBy=graphical.target
