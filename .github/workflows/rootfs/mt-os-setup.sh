@@ -49,24 +49,4 @@ chown -R ghost:ghost /home/ghost
 echo "{}" > /etc/mt-os/ghost-commands.json
 chmod 666 /etc/mt-os/ghost-commands.json
 echo "Setup complete."
-```
 
----
-
-**File 2: `rootfs/mt-os-services/mt-ai-daemon.service`**
-```
-[Unit]
-Description=MT-OS Ghost AI
-After=network.target sound.target
-
-[Service]
-Type=simple
-User=ghost
-Environment=DISPLAY=:0
-EnvironmentFile=-/etc/mt-os/api.env
-ExecStart=/usr/bin/python3 /opt/mt-os/mt-face.py
-Restart=on-failure
-RestartSec=5
-
-[Install]
-WantedBy=graphical.target
