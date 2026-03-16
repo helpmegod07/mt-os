@@ -147,6 +147,7 @@ echo "Mounting root partition..."
 sudo mount "$P2" /mnt/mt-live
 
 echo "Copying system files (this may take 5-15 minutes)..."
+# IMPORTANT: Removed --exclude=/boot to ensure the kernel is copied
 sudo rsync -ax --progress \
   --exclude=/proc --exclude=/sys --exclude=/dev \
   --exclude=/run --exclude=/mnt --exclude=/media \
@@ -165,6 +166,12 @@ for d in dev dev/pts proc sys; do sudo mount --bind /$d /mnt/mt-live/$d; done
 echo "Mounting boot partition..."
 sudo mount "$P1" /mnt/mt-live/boot
 
+# If /boot was empty on the live system, we need to copy its contents to the new boot partition
+if [ -d "/boot" ] && [ "$(ls -A /boot 2>/dev/null)" ]; then
+    echo "Copying live boot files to new boot partition..."
+    sudo rsync -ax /boot/ /mnt/mt-live/boot/
+fi
+
 echo ""
 echo "=========================================="
 echo "Step 5: Installing bootloader and kernel..."
@@ -172,9 +179,18 @@ echo "=========================================="
 
 # Ensure the kernel is present
 if ! ls /mnt/mt-live/boot/vmlinuz* >/dev/null 2>&1; then
-    echo "Warning: No kernel found in /boot. Installing kernel..."
+    echo "Warning: No kernel found in /boot. Attempting to install kernel..."
+    # Ensure we have the right sources for the kernel
     sudo chroot /mnt/mt-live apt-get update -qq --allow-releaseinfo-change || true
     sudo chroot /mnt/mt-live apt-get install -y -qq --no-install-recommends linux-image-686 || true
+fi
+
+# Final check for kernel
+if ! ls /mnt/mt-live/boot/vmlinuz* >/dev/null 2>&1; then
+    echo "!!! CRITICAL ERROR: No kernel found in /boot after installation attempts !!!"
+    echo "The system will not be able to boot."
+    read -p "Press Enter to exit..."
+    exit 1
 fi
 
 # Generate a proper fstab
@@ -199,16 +215,10 @@ echo "Configuring GRUB..."
 KERNEL_PATH=$(ls /mnt/mt-live/boot/vmlinuz* 2>/dev/null | head -n 1)
 INITRD_PATH=$(ls /mnt/mt-live/boot/initrd.img* 2>/dev/null | head -n 1)
 
-if [ -z "$KERNEL_PATH" ] || [ -z "$INITRD_PATH" ]; then
-    echo "Error: Kernel or Initrd not found in /boot after installation."
-    exit 1
-fi
-
 KERNEL_FILE=$(basename "$KERNEL_PATH")
 INITRD_FILE=$(basename "$INITRD_PATH")
 
-# IMPORTANT: Since /boot is a separate partition, the paths in grub.cfg 
-# should be relative to the root of the boot partition (i.e., /vmlinuz, not /boot/vmlinuz)
+# Paths in grub.cfg are relative to the root of the boot partition
 sudo tee /mnt/mt-live/boot/grub/grub.cfg << GRUBCFG
 set default=0
 set timeout=5
@@ -227,13 +237,6 @@ menuentry "MT-OS Safe Mode" {
     insmod ext2
     search --no-floppy --fs-uuid --set=root $BOOT_UUID
     linux /$KERNEL_FILE root=UUID=$ROOT_UUID nomodeset noapic nosplash
-    initrd /$INITRD_FILE
-}
-
-menuentry "MT-OS (Legacy BIOS Compatibility)" {
-    insmod ext2
-    set root=(hd0,msdos1)
-    linux /$KERNEL_FILE root=UUID=$ROOT_UUID quiet rw
     initrd /$INITRD_FILE
 }
 GRUBCFG
