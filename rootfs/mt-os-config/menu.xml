@@ -5,8 +5,6 @@
   <item label="AI Face"><action name="Execute"><command>python3 /opt/mt-os/mt-face.py</command></action></item>
   <item label="Firefox"><action name="Execute"><command>firefox-esr</command></action></item>
   <separator/>
-  <item label="Display Settings"><action name="Execute"><command>python3 /opt/mt-os/mt-display.py</command></action></item>
-  <item label="Ghost Commands"><action name="Execute"><command>python3 /opt/mt-os/mt-ghost-manager.py</command></action></item>
   <item label="API Key"><action name="Execute"><command>xterm -e bash /opt/mt-os/mt-apikey.sh</command></action></item>
   <item label="Install to Disk"><action name="Execute"><command>xterm -e bash /opt/mt-os/mt-install.sh</command></action></item>
   <separator/>
