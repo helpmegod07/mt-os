@@ -17,16 +17,19 @@ trap 'error_handler $LINENO' ERR
 echo "MT-OS Persistent Install"
 
 # Check for required tools
-MISSING=()
+MISSING_TOOLS=()
 for tool in parted mkfs.ext4 rsync blkid wipefs; do
     if ! command -v $tool &> /dev/null; then
-        MISSING+=($tool)
+        MISSING_TOOLS+=($tool)
     fi
 done
 
-if [ ${#MISSING[@]} -ne 0 ]; then
-    echo "Error: The following required tools are missing: ${MISSING[*]}"
-    echo "Please run 'sudo apt-get update && sudo apt-get install -y ${MISSING[*]}' first."
+if [ ${#MISSING_TOOLS[@]} -ne 0 ]; then
+    echo "Error: The following required tools are missing: ${MISSING_TOOLS[*]}"
+    echo ""
+    echo "To fix this, please run:"
+    echo "sudo apt-get update && sudo apt-get install -y parted rsync e2fsprogs util-linux"
+    echo ""
     read -p "Press Enter to exit..."
     exit 1
 fi
