@@ -129,7 +129,16 @@ class Term:
         try:
             cmds=json.load(open("/etc/mt-os/ghost-commands.json"))
             w=word.strip()
-            if w in cmds:
+            if w == "pull":
+                self._p("Pulling latest changes from repository...\n", "ai")
+                threading.Thread(target=self._run, args=("git pull",), daemon=True).start()
+            elif w == "push":
+                self._p("Pushing changes to repository...\n", "ai")
+                threading.Thread(target=self._run, args=("git push",), daemon=True).start()
+            elif w == "status":
+                self._p("Checking repository status...\n", "ai")
+                threading.Thread(target=self._run, args=("git status",), daemon=True).start()
+            elif w in cmds:
                 for c in cmds[w]: self._p(f"▶ {c}\n","ok"); subprocess.Popen(c,shell=True,cwd=self.cwd)
                 speak_to_face(f"Running ghost command {w}")
             else: self._p(f"No ghost command: {w}\n","error"); speak_to_face(f"No ghost command named {w}")
