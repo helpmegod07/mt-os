@@ -18,7 +18,7 @@ echo "MT-OS Persistent Install"
 
 # Check for required tools
 MISSING=()
-for tool in parted mkfs.ext4 rsync blkid; do
+for tool in parted mkfs.ext4 rsync blkid wipefs; do
     if ! command -v $tool &> /dev/null; then
         MISSING+=($tool)
     fi
@@ -48,6 +48,11 @@ if [ "$CONFIRM_UPPER" != "YES" ]; then
     read -p "Press Enter to exit..."
     exit 0
 fi
+
+echo "Clearing existing partitions..."
+# Wipe any existing filesystem signatures to prevent parted from hanging or failing
+wipefs -a "$DISK" || true
+
 parted -s "$DISK" mklabel msdos
 parted -s "$DISK" mkpart primary ext4 1MiB 512MiB
 parted -s "$DISK" mkpart primary ext4 512MiB 5000MiB

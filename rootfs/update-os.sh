@@ -25,7 +25,7 @@ echo "Applying updates..."
 # Install missing dependencies and perform a full upgrade to resolve held-back packages
 echo "Checking for system updates and missing dependencies..."
 sudo apt-get update -qq
-sudo apt-get install -y --no-install-recommends feh picom python3-pil tzdata ntpdate parted rsync dosfstools e2fsprogs util-linux 2>/dev/null
+sudo apt-get install -y --no-install-recommends feh picom python3-pil tzdata ntpdate parted rsync dosfstools e2fsprogs util-linux wipefs 2>/dev/null
 sudo apt-get full-upgrade -y --no-install-recommends 2>/dev/null
 
 # Ensure /sbin and /usr/sbin are in the PATH for disk tools
