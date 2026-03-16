@@ -25,11 +25,14 @@ rsync -ax --progress \
   / /mnt/mt-live/
 mkdir -p /mnt/mt-live/{proc,sys,dev,run,mnt,media}
 for d in dev dev/pts proc sys; do mount --bind /$d /mnt/mt-live/$d; done
+# Ensure /boot is mounted before grub-install
+mount "$P1" /mnt/mt-live/boot
 chroot /mnt/mt-live grub-install --target=i386-pc "$DISK"
 chroot /mnt/mt-live update-grub
+umount /mnt/mt-live/boot
 UUID=$(blkid -s UUID -o value "$P2")
 echo "UUID=$UUID / ext4 errors=remount-ro 0 1" > /mnt/mt-live/etc/fstab
-for d in sys proc dev/pts dev; do umount /mnt/mt-live/$d 2>/dev/null||true; done
+for d in boot sys proc dev/pts dev; do umount /mnt/mt-live/$d 2>/dev/null||true; done
 mount "$P3" /mnt/mt-persist
 echo "/ union" > /mnt/mt-persist/persistence.conf
 umount /mnt/mt-persist
