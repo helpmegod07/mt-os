@@ -14,4 +14,5 @@ try:
     img.save(p)
 except Exception as e: print(e)
 "
-feh --bg-fill ~/.mt-wallpaper.png 2>/dev/null || xsetroot -solid "#030308"
+# Ensure feh uses the correct path and fallback to a dark color
+feh --bg-fill /home/ghost/.mt-wallpaper.png 2>/dev/null || xsetroot -solid "#030308"
