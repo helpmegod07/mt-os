@@ -102,7 +102,7 @@ if [ -d "$CONFIG_DIR" ]; then
     test -f "$CONFIG_DIR/autostart" && cp "$CONFIG_DIR/autostart" /home/ghost/.config/openbox/
     test -f "$CONFIG_DIR/rc.xml" && cp "$CONFIG_DIR/rc.xml" /home/ghost/.config/openbox/
     test -f "$CONFIG_DIR/menu.xml" && cp "$CONFIG_DIR/menu.xml" /home/ghost/.config/openbox/
-    test -f "$CONFIG_DIR/.bashrc" && cp "$CONFIG_DIR/.bashrc" /home/ghost/.bashrc
+    test -f "$CONFIG_DIR/themerc" && cp "$CONFIG_DIR/themerc" /home/ghost/.config/openbox/themerc
     test -f "$CONFIG_DIR/set-wallpaper.sh" && cp "$CONFIG_DIR/set-wallpaper.sh" /opt/mt-os/
 fi
 chmod +x /home/ghost/.config/openbox/autostart 2>/dev/null || true

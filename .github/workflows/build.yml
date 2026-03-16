@@ -36,7 +36,7 @@ jobs:
         sudo cp rootfs/mt-os-config/autostart /tmp/chroot/mt-os-config/
         sudo cp rootfs/mt-os-config/rc.xml /tmp/chroot/mt-os-config/
         sudo cp rootfs/mt-os-config/menu.xml /tmp/chroot/mt-os-config/
-        sudo cp rootfs/mt-os-config/.bashrc /tmp/chroot/mt-os-config/
+        sudo cp rootfs/mt-os-config/themerc /tmp/chroot/mt-os-config/
         sudo cp rootfs/mt-os-config/set-wallpaper.sh /tmp/chroot/mt-os-config/
         sudo cp rootfs/mt-os-services/* /tmp/chroot/mt-os-services/
         sudo chmod +x /tmp/chroot/mt-os-setup.sh
