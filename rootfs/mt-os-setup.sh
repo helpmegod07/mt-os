@@ -49,19 +49,19 @@ LGDM
 
 # Copy apps and services
 mkdir -p /opt/mt-os /etc/mt-os
-for f in /mt-os-apps/*; do [ -f "$f" ] && cp "$f" "/opt/mt-os/"; done
+for f in /mt-os-apps/*; do test -f "$f" && cp "$f" "/opt/mt-os/"; done
 chmod +x /opt/mt-os/*.sh 2>/dev/null || true
 
-for f in /mt-os-services/*.service; do [ -f "$f" ] && cp "$f" "/etc/systemd/system/"; done
+for f in /mt-os-services/*.service; do test -f "$f" && cp "$f" "/etc/systemd/system/"; done
 systemctl enable mt-ai-daemon.service 2>/dev/null || true
 
 # Corrected configuration file copying
 mkdir -p /home/ghost/.config/openbox
-[ -f /mt-os-config/autostart ]: # "&& cp /mt-os-config/autostart /home/ghost/.config/openbox/"
-[ -f /mt-os-config/rc.xml ]: # "&& cp /mt-os-config/rc.xml /home/ghost/.config/openbox/"
-[ -f /mt-os-config/menu.xml ]: # "&& cp /mt-os-config/menu.xml /home/ghost/.config/openbox/"
-[ -f /mt-os-config/.bashrc ]: # "&& cp /mt-os-config/.bashrc /home/ghost/.bashrc"
-[ -f /mt-os-config/set-wallpaper.sh ]: # "&& cp /mt-os-config/set-wallpaper.sh /opt/mt-os/"
+test -f /mt-os-config/autostart && cp /mt-os-config/autostart /home/ghost/.config/openbox/
+test -f /mt-os-config/rc.xml && cp /mt-os-config/rc.xml /home/ghost/.config/openbox/
+test -f /mt-os-config/menu.xml && cp /mt-os-config/menu.xml /home/ghost/.config/openbox/
+test -f /mt-os-config/.bashrc && cp /mt-os-config/.bashrc /home/ghost/.bashrc
+test -f /mt-os-config/set-wallpaper.sh && cp /mt-os-config/set-wallpaper.sh /opt/mt-os/
 
 chmod +x /opt/mt-os/set-wallpaper.sh 2>/dev/null || true
 chown -R ghost:ghost /home/ghost
@@ -70,10 +70,10 @@ echo "{}" > /etc/mt-os/ghost-commands.json
 chmod 666 /etc/mt-os/ghost-commands.json
 
 # Install update tools
-[ -f /rootfs/update-checker.sh ]: # "&& cp /rootfs/update-checker.sh /opt/mt-os/"
+test -f /rootfs/update-checker.sh && cp /rootfs/update-checker.sh /opt/mt-os/
 chmod +x /opt/mt-os/update-checker.sh 2>/dev/null || true
 
-[ -f /rootfs/update-os.sh ]: # "&& cp /rootfs/update-os.sh /usr/local/bin/update-os"
+test -f /rootfs/update-os.sh && cp /rootfs/update-os.sh /usr/local/bin/update-os
 chmod +x /usr/local/bin/update-os 2>/dev/null || true
 
 echo "Setup complete."
