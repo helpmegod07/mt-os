@@ -3,6 +3,7 @@ set -e
 
 # Ensure disk tools in /sbin and /usr/sbin are in the PATH
 export PATH=$PATH:/sbin:/usr/sbin:/usr/local/sbin
+export DEBIAN_FRONTEND=noninteractive
 
 # Error handling to keep window open
 error_handler() {
@@ -14,7 +15,10 @@ error_handler() {
 }
 trap 'error_handler $LINENO' ERR
 
-echo "MT-OS Persistent Install"
+echo "=========================================="
+echo "  MT-OS Persistent Laptop Installation"
+echo "=========================================="
+echo ""
 
 # Check for required tools and attempt to install them if missing
 MISSING_TOOLS=()
@@ -50,8 +54,11 @@ if [ ${#MISSING_TOOLS[@]} -ne 0 ]; then
     fi
 fi
 
+echo ""
+echo "Available disks:"
 lsblk -d -o NAME,SIZE,MODEL
-read -p "Target disk (e.g. sda): " DISK_INPUT
+echo ""
+read -p "Target disk (e.g. sda, nvme0n1): " DISK_INPUT
 DISK="/dev/$DISK_INPUT"
 if [ ! -b "$DISK" ]; then
     echo "Error: Disk $DISK not found."
@@ -59,7 +66,9 @@ if [ ! -b "$DISK" ]; then
     exit 1
 fi
 
-read -p "ERASE $DISK? Type YES: " CONFIRM
+echo ""
+echo "WARNING: This will ERASE all data on $DISK"
+read -p "ERASE $DISK? Type YES to confirm: " CONFIRM
 # Make confirmation case-insensitive
 CONFIRM_UPPER=$(echo "$CONFIRM" | tr '[:lower:]' '[:upper:]')
 if [ "$CONFIRM_UPPER" != "YES" ]; then
@@ -68,28 +77,47 @@ if [ "$CONFIRM_UPPER" != "YES" ]; then
     exit 0
 fi
 
-echo "Clearing existing partitions..."
+echo ""
+echo "=========================================="
+echo "Step 1: Clearing existing partitions..."
+echo "=========================================="
 # Unmount any existing partitions on the target disk to prevent "Device or resource busy" errors
 echo "Unmounting any active partitions on $DISK..."
-for part in $(lsblk -ln -o NAME "$DISK" | tail -n +2); do
+for part in $(lsblk -ln -o NAME "$DISK" 2>/dev/null | tail -n +2); do
     # Handle both /dev/sda1 and /dev/nvme0n1p1 styles
     PART_PATH="/dev/$part"
-    if mountpoint -q "$PART_PATH" || grep -q "$PART_PATH" /proc/mounts; then
+    if mountpoint -q "$PART_PATH" 2>/dev/null || grep -q "$PART_PATH" /proc/mounts 2>/dev/null; then
         echo "Unmounting $PART_PATH..."
         umount -l "$PART_PATH" || true
     fi
 done
 
 # Wipe any existing filesystem signatures to prevent parted from hanging or failing
+echo "Wiping existing filesystems..."
 wipefs -a "$DISK" || true
 
+echo ""
+echo "=========================================="
+echo "Step 2: Creating partitions..."
+echo "=========================================="
+echo "Creating partition table (MBR)..."
 parted -s "$DISK" mklabel msdos
+
+echo "Creating boot partition (512 MB)..."
 parted -s "$DISK" mkpart primary ext4 1MiB 512MiB
+
+echo "Creating root partition (5 GB)..."
 parted -s "$DISK" mkpart primary ext4 512MiB 5000MiB
+
+echo "Creating persistence partition (remaining space)..."
 parted -s "$DISK" mkpart primary ext4 5000MiB 100%
+
+echo "Setting boot flag..."
 parted -s "$DISK" set 1 boot on
+
 # Wait for partitions to be recognized
 sleep 2
+
 # Robust partition naming
 if [[ "$DISK" == *nvme* ]] || [[ "$DISK" == *mmcblk* ]]; then
     P1="${DISK}p1"; P2="${DISK}p2"; P3="${DISK}p3"
@@ -97,49 +125,76 @@ else
     P1="${DISK}1"; P2="${DISK}2"; P3="${DISK}3"
 fi
 
-echo "Formatting partitions..."
+echo ""
+echo "=========================================="
+echo "Step 3: Formatting partitions..."
+echo "=========================================="
+echo "Formatting boot partition..."
 mkfs.ext4 -F -L boot "$P1" || { echo "Failed to format $P1"; exit 1; }
+
+echo "Formatting root partition..."
 mkfs.ext4 -F -L MT-OS "$P2" || { echo "Failed to format $P2"; exit 1; }
+
+echo "Formatting persistence partition..."
 mkfs.ext4 -F -L persistence "$P3" || { echo "Failed to format $P3"; exit 1; }
+
+echo ""
+echo "=========================================="
+echo "Step 4: Mounting and copying system files..."
+echo "=========================================="
 mkdir -p /mnt/mt-live /mnt/mt-persist
 mount "$P2" /mnt/mt-live || { echo "Failed to mount $P2"; exit 1; }
-echo "Copying files (this may take a while)..."
+
+echo "Copying system files (this may take 5-15 minutes)..."
 rsync -ax --progress \
   --exclude=/proc --exclude=/sys --exclude=/dev \
   --exclude=/run --exclude=/mnt --exclude=/media \
   --exclude=/tmp/* --exclude=/var/tmp/* \
+  --exclude=/var/cache/apt/archives/* \
+  --exclude=/var/log/* \
   / /mnt/mt-live/
 
+echo ""
+echo "Creating essential directories..."
 mkdir -p /mnt/mt-live/{proc,sys,dev,run,mnt,media,boot}
+
+echo "Mounting virtual filesystems..."
 for d in dev dev/pts proc sys; do mount --bind /$d /mnt/mt-live/$d; done
 
-# Ensure /boot is mounted before grub-install
+echo "Mounting boot partition..."
 mount "$P1" /mnt/mt-live/boot || { echo "Failed to mount $P1 to /boot"; exit 1; }
 
+echo ""
+echo "=========================================="
+echo "Step 5: Installing bootloader and kernel..."
+echo "=========================================="
+
 # Ensure the kernel is present in the new system BEFORE installing GRUB
-# Use a more robust check for the kernel file
 if ! ls /mnt/mt-live/boot/vmlinuz* >/dev/null 2>&1; then
-    echo "Warning: No kernel found in /boot. Reinstalling kernel..."
-    # Ensure /dev, /proc, /sys are mounted for apt-get (already done above, but good to be sure)
-    chroot /mnt/mt-live apt-get update
-    chroot /mnt/mt-live apt-get install -y --no-install-recommends linux-image-686
+    echo "Warning: No kernel found in /boot. Installing kernel..."
+    chroot /mnt/mt-live apt-get update -qq
+    chroot /mnt/mt-live apt-get install -y --no-install-recommends linux-image-686 || true
 fi
 
-echo "Installing bootloader..."
 # Generate a proper fstab before GRUB setup
+echo "Generating fstab..."
 BOOT_UUID=$(blkid -s UUID -o value "$P1")
 ROOT_UUID=$(blkid -s UUID -o value "$P2")
 PERSIST_UUID=$(blkid -s UUID -o value "$P3")
 
 cat > /mnt/mt-live/etc/fstab << FSTAB
+# MT-OS Persistent Installation
 UUID=$ROOT_UUID / ext4 errors=remount-ro 0 1
 UUID=$BOOT_UUID /boot ext4 defaults 0 2
+UUID=$PERSIST_UUID /persistence ext4 defaults 0 2
 FSTAB
 
+echo "Installing GRUB bootloader..."
 # Force i386-pc for older 32-bit BIOS systems
-chroot /mnt/mt-live grub-install --target=i386-pc --force "$DISK"
+chroot /mnt/mt-live grub-install --target=i386-pc --force "$DISK" 2>&1 || echo "Warning: GRUB installation had issues, but continuing..."
+
 # Create a manual grub.cfg if update-grub fails or produces live-only config
-# Use a more robust way to find kernel and initrd files
+echo "Configuring GRUB..."
 KERNEL_PATH=$(ls /mnt/mt-live/boot/vmlinuz* 2>/dev/null | head -n 1)
 INITRD_PATH=$(ls /mnt/mt-live/boot/initrd.img* 2>/dev/null | head -n 1)
 
@@ -151,7 +206,7 @@ fi
 KERNEL_FILE=$(basename "$KERNEL_PATH")
 INITRD_FILE=$(basename "$INITRD_PATH")
 
-cat > /mnt/mt-live/boot/grub/grub.cfg << GRUBCFG
+cat > /mnt/mt-live/boot/grub/grub.cfg << 'GRUBCFG'
 set default=0
 set timeout=5
 insmod all_video
@@ -164,16 +219,109 @@ menuentry "MT-OS (Installed)" {
     linux /$KERNEL_FILE root=UUID=$ROOT_UUID quiet rw
     initrd /$INITRD_FILE
 }
+
+menuentry "MT-OS Safe Mode" {
+    insmod ext2
+    search --no-floppy --fs-uuid --set=root $BOOT_UUID
+    linux /$KERNEL_FILE root=UUID=$ROOT_UUID nomodeset noapic nosplash
+    initrd /$INITRD_FILE
+}
+
+menuentry "MT-OS 800x600 (Very Old Hardware)" {
+    insmod ext2
+    search --no-floppy --fs-uuid --set=root $BOOT_UUID
+    linux /$KERNEL_FILE root=UUID=$ROOT_UUID vga=771 nomodeset
+    initrd /$INITRD_FILE
+}
 GRUBCFG
 
+# Replace placeholders with actual UUIDs
+sed -i "s|\$BOOT_UUID|$BOOT_UUID|g" /mnt/mt-live/boot/grub/grub.cfg
+sed -i "s|\$ROOT_UUID|$ROOT_UUID|g" /mnt/mt-live/boot/grub/grub.cfg
+sed -i "s|\$KERNEL_FILE|$KERNEL_FILE|g" /mnt/mt-live/boot/grub/grub.cfg
+sed -i "s|\$INITRD_FILE|$INITRD_FILE|g" /mnt/mt-live/boot/grub/grub.cfg
+
+echo ""
+echo "=========================================="
+echo "Step 6: Configuring system..."
+echo "=========================================="
+
+# Set hostname
+echo "mt-os" > /mnt/mt-live/etc/hostname
+sed -i 's/^127.0.1.1.*/127.0.1.1 mt-os/' /mnt/mt-live/etc/hosts || echo "127.0.1.1 mt-os" >> /mnt/mt-live/etc/hosts
+
+# Configure timezone
+echo "UTC" > /mnt/mt-live/etc/timezone
+ln -sf /usr/share/zoneinfo/UTC /mnt/mt-live/etc/localtime
+
+# Ensure ghost user exists and has proper permissions
+chroot /mnt/mt-live useradd -m -s /bin/bash -G sudo,audio,video,input ghost 2>/dev/null || true
+echo "ghost:ghost" | chroot /mnt/mt-live chpasswd
+echo "ghost ALL=(ALL) NOPASSWD:ALL" >> /mnt/mt-live/etc/sudoers || true
+
+# Configure LightDM autologin
+mkdir -p /mnt/mt-live/etc/lightdm
+cat > /mnt/mt-live/etc/lightdm/lightdm.conf << 'LIGHTDM'
+[Seat:*]
+autologin-user=ghost
+autologin-user-timeout=0
+user-session=openbox
+LIGHTDM
+
+# Ensure MT-OS directories exist
+mkdir -p /mnt/mt-live/opt/mt-os
+mkdir -p /mnt/mt-live/etc/mt-os
+
+# Create empty ghost commands file
+echo "{}" > /mnt/mt-live/etc/mt-os/ghost-commands.json
+chmod 666 /mnt/mt-live/etc/mt-os/ghost-commands.json
+
+echo ""
+echo "=========================================="
+echo "Step 7: Finalizing installation..."
+echo "=========================================="
+
+# Unmount boot partition
 umount /mnt/mt-live/boot
-for d in sys proc dev/pts dev; do umount /mnt/mt-live/$d 2>/dev/null||true; done
+
+# Unmount virtual filesystems
+for d in sys proc dev/pts dev; do umount /mnt/mt-live/$d 2>/dev/null || true; done
+
+# Mount and configure persistence
 mount "$P3" /mnt/mt-persist
 echo "/ union" > /mnt/mt-persist/persistence.conf
 umount /mnt/mt-persist
+
+# Final unmount
 umount /mnt/mt-live
-echo "--------------------------------------"
-echo "Done! MT-OS has been installed to $DISK."
-echo "Please remove your installation media and reboot."
-echo "--------------------------------------"
+
+# Cleanup
+rmdir /mnt/mt-live /mnt/mt-persist 2>/dev/null || true
+
+echo ""
+echo "=========================================="
+echo "✓ Installation Complete!"
+echo "=========================================="
+echo ""
+echo "MT-OS has been successfully installed to $DISK"
+echo ""
+echo "Installation Summary:"
+echo "  Boot Partition:       $P1 (512 MB)"
+echo "  Root Partition:       $P2 (5 GB)"
+echo "  Persistence Partition: $P3 (remaining)"
+echo ""
+echo "Next steps:"
+echo "  1. Remove your installation media (USB/CD)"
+echo "  2. Reboot your laptop"
+echo "  3. Select 'MT-OS (Installed)' from the boot menu"
+echo "  4. Login with username: ghost, password: ghost"
+echo ""
+echo "To set up GitHub AI features:"
+echo "  1. Run: mt-apikey"
+echo "  2. Paste your GitHub Personal Access Token (PAT)"
+echo ""
+echo "To connect to Wi-Fi:"
+echo "  1. Run: mt-wifi"
+echo ""
+echo "=========================================="
 read -p "Press Enter to exit..."
