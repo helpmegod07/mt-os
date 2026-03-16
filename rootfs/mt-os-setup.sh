@@ -34,6 +34,7 @@ apt-get install -y --no-install-recommends --fix-missing \
     portaudio19-dev python3-pyaudio \
     dunst libnotify-bin \
     tzdata ntpdate \
+    build-essential python3-dev \
     python3-pil zlib1g-dev libjpeg-dev || {
     echo "First attempt failed, retrying with --fix-missing..."
     sleep 10
@@ -53,6 +54,7 @@ apt-get install -y --no-install-recommends --fix-missing \
         portaudio19-dev python3-pyaudio \
         dunst libnotify-bin \
         tzdata ntpdate \
+        build-essential python3-dev \
         python3-pil zlib1g-dev libjpeg-dev
     }
 
