@@ -30,6 +30,8 @@ apt-get install -y --no-install-recommends --fix-missing \
     firefox-esr picom fonts-noto \
     grub-pc grub-common parted dosfstools \
     x11-xserver-utils arandr wget curl git \
+    firmware-linux firmware-linux-nonfree firmware-iwlwifi firmware-realtek firmware-atheros firmware-libertas firmware-brcm80211 \
+    wpasupplicant wireless-tools \
     iproute2 net-tools htop conky ca-certificates \
     portaudio19-dev python3-pyaudio \
     dunst libnotify-bin \
@@ -51,6 +53,8 @@ apt-get install -y --no-install-recommends --fix-missing \
         firefox-esr picom fonts-noto \
         grub-pc grub-common parted dosfstools \
         x11-xserver-utils arandr wget curl git \
+        firmware-linux firmware-linux-nonfree firmware-iwlwifi firmware-realtek firmware-atheros firmware-libertas firmware-brcm80211 \
+        wpasupplicant wireless-tools \
         iproute2 net-tools htop conky ca-certificates \
         portaudio19-dev python3-pyaudio \
         dunst libnotify-bin \

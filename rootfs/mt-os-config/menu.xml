@@ -6,6 +6,7 @@
       <item label="File Manager"><action name="Execute"><command>pcmanfm</command></action></item>
       <item label="System Monitor (htop)"><action name="Execute"><command>xterm -e htop</command></action></item>
   <item label="Firefox"><action name="Execute"><command>firefox-esr</command></action></item>
+  <item label="Connect to Wi-Fi"><action name="Execute"><command>xterm -e bash /opt/mt-os/mt-wifi.sh</command></action></item>
   <separator/>
   <item label="API Key"><action name="Execute"><command>xterm -e bash /opt/mt-os/mt-apikey.sh</command></action></item>
   <item label="Install to Disk"><action name="Execute"><command>xterm -e bash /opt/mt-os/mt-install.sh</command></action></item>
