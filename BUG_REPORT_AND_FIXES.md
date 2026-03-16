@@ -162,3 +162,23 @@
 - The script now attempts to automatically install missing dependencies (`parted`, `rsync`, `e2fsprogs`, `util-linux`) before proceeding, rather than just exiting.
 
 ---
+
+---
+
+### 7. **Septenary Issue: Application Unresponsiveness (Firefox/General UI)**
+
+**Root Cause:**
+- The Openbox configuration had a `focusDelay` of 200ms and `<followMouse>no</followMouse>`, which could cause lag or missed focus events when switching between the AI windows and standard applications like Firefox.
+- Firefox and other complex applications sometimes struggle with focus in minimal window managers if explicit application rules aren't defined.
+- The AI windows (`mt-face.py` and `mt-terminal.py`) were not explicitly set to a normal layer, potentially causing them to overlap or intercept events even without the `topmost` attribute.
+
+**Impact:**
+- Users reported being unable to interact with Firefox (clicks not registering, keyboard focus missing).
+- General UI felt "stuck" or unresponsive when multiple windows were open.
+
+**Fix Applied:**
+- Updated `rc.xml` to set `focusDelay` to 0 for instant focus response.
+- Added explicit application rules in `rc.xml` for `Firefox` and `Tk` (the AI apps) to ensure they always receive focus correctly and stay in the `normal` layer.
+- Updated `mt-face.py` to explicitly disable `topmost` and added a focus-in binding to ensure it handles focus transitions gracefully without stealing it from other apps.
+
+---

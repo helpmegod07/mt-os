@@ -9,7 +9,7 @@
     <followMouse>no</followMouse>
     <focusLast>yes</focusLast>
     <underMouse>no</underMouse>
-    <focusDelay>200</focusDelay>
+    <focusDelay>0</focusDelay>
     <raiseOnFocus>yes</raiseOnFocus>
   </focus>
   <placement>
@@ -216,5 +216,14 @@
     <submenuHideDelay>400</submenuHideDelay>
     <applicationIcons>yes</applicationIcons>
   </menu>
-  <applications/>
+  <applications>
+    <application class="Firefox*">
+      <focus>yes</focus>
+      <layer>normal</layer>
+    </application>
+    <application class="Tk">
+      <focus>yes</focus>
+      <layer>normal</layer>
+    </application>
+  </applications>
 </openbox_config>
