@@ -142,11 +142,17 @@ echo ""
 echo "=========================================="
 echo "Step 4: Mounting and copying system files..."
 echo "=========================================="
-mkdir -p /mnt/mt-live /mnt/mt-persist
-mount "$P2" /mnt/mt-live || { echo "Failed to mount $P2"; exit 1; }
+# Ensure mount points exist and are clean
+sudo mkdir -p /mnt/mt-live /mnt/mt-persist
+# Unmount if already mounted from a previous failed attempt
+sudo umount -l /mnt/mt-live 2>/dev/null || true
+sudo umount -l /mnt/mt-persist 2>/dev/null || true
+
+echo "Mounting root partition..."
+sudo mount "$P2" /mnt/mt-live || { echo "Failed to mount $P2 to /mnt/mt-live"; exit 1; }
 
 echo "Copying system files (this may take 5-15 minutes)..."
-rsync -ax --progress \
+sudo rsync -ax --progress \
   --exclude=/proc --exclude=/sys --exclude=/dev \
   --exclude=/run --exclude=/mnt --exclude=/media \
   --exclude=/tmp/* --exclude=/var/tmp/* \
@@ -156,13 +162,13 @@ rsync -ax --progress \
 
 echo ""
 echo "Creating essential directories..."
-mkdir -p /mnt/mt-live/{proc,sys,dev,run,mnt,media,boot}
+sudo mkdir -p /mnt/mt-live/{proc,sys,dev,run,mnt,media,boot}
 
 echo "Mounting virtual filesystems..."
-for d in dev dev/pts proc sys; do mount --bind /$d /mnt/mt-live/$d; done
+for d in dev dev/pts proc sys; do sudo mount --bind /$d /mnt/mt-live/$d; done
 
 echo "Mounting boot partition..."
-mount "$P1" /mnt/mt-live/boot || { echo "Failed to mount $P1 to /boot"; exit 1; }
+sudo mount "$P1" /mnt/mt-live/boot || { echo "Failed to mount $P1 to /boot"; exit 1; }
 
 echo ""
 echo "=========================================="
@@ -172,8 +178,8 @@ echo "=========================================="
 # Ensure the kernel is present in the new system BEFORE installing GRUB
 if ! ls /mnt/mt-live/boot/vmlinuz* >/dev/null 2>&1; then
     echo "Warning: No kernel found in /boot. Installing kernel..."
-    chroot /mnt/mt-live apt-get update -qq
-    chroot /mnt/mt-live apt-get install -y --no-install-recommends linux-image-686 || true
+    sudo chroot /mnt/mt-live apt-get update -qq
+    sudo chroot /mnt/mt-live apt-get install -y --no-install-recommends linux-image-686 || true
 fi
 
 # Generate a proper fstab before GRUB setup
@@ -182,7 +188,7 @@ BOOT_UUID=$(blkid -s UUID -o value "$P1")
 ROOT_UUID=$(blkid -s UUID -o value "$P2")
 PERSIST_UUID=$(blkid -s UUID -o value "$P3")
 
-cat > /mnt/mt-live/etc/fstab << FSTAB
+sudo tee /mnt/mt-live/etc/fstab << FSTAB
 # MT-OS Persistent Installation
 UUID=$ROOT_UUID / ext4 errors=remount-ro 0 1
 UUID=$BOOT_UUID /boot ext4 defaults 0 2
@@ -191,7 +197,7 @@ FSTAB
 
 echo "Installing GRUB bootloader..."
 # Force i386-pc for older 32-bit BIOS systems
-chroot /mnt/mt-live grub-install --target=i386-pc --force "$DISK" 2>&1 || echo "Warning: GRUB installation had issues, but continuing..."
+sudo chroot /mnt/mt-live grub-install --target=i386-pc --force "$DISK" 2>&1 || echo "Warning: GRUB installation had issues, but continuing..."
 
 # Create a manual grub.cfg if update-grub fails or produces live-only config
 echo "Configuring GRUB..."
@@ -206,7 +212,7 @@ fi
 KERNEL_FILE=$(basename "$KERNEL_PATH")
 INITRD_FILE=$(basename "$INITRD_PATH")
 
-cat > /mnt/mt-live/boot/grub/grub.cfg << 'GRUBCFG'
+sudo tee /mnt/mt-live/boot/grub/grub.cfg << GRUBCFG
 set default=0
 set timeout=5
 insmod all_video
@@ -235,33 +241,27 @@ menuentry "MT-OS 800x600 (Very Old Hardware)" {
 }
 GRUBCFG
 
-# Replace placeholders with actual UUIDs
-sed -i "s|\$BOOT_UUID|$BOOT_UUID|g" /mnt/mt-live/boot/grub/grub.cfg
-sed -i "s|\$ROOT_UUID|$ROOT_UUID|g" /mnt/mt-live/boot/grub/grub.cfg
-sed -i "s|\$KERNEL_FILE|$KERNEL_FILE|g" /mnt/mt-live/boot/grub/grub.cfg
-sed -i "s|\$INITRD_FILE|$INITRD_FILE|g" /mnt/mt-live/boot/grub/grub.cfg
-
 echo ""
 echo "=========================================="
 echo "Step 6: Configuring system..."
 echo "=========================================="
 
 # Set hostname
-echo "mt-os" > /mnt/mt-live/etc/hostname
-sed -i 's/^127.0.1.1.*/127.0.1.1 mt-os/' /mnt/mt-live/etc/hosts || echo "127.0.1.1 mt-os" >> /mnt/mt-live/etc/hosts
+echo "mt-os" | sudo tee /mnt/mt-live/etc/hostname
+sudo sed -i 's/^127.0.1.1.*/127.0.1.1 mt-os/' /mnt/mt-live/etc/hosts || echo "127.0.1.1 mt-os" | sudo tee -a /mnt/mt-live/etc/hosts
 
 # Configure timezone
-echo "UTC" > /mnt/mt-live/etc/timezone
-ln -sf /usr/share/zoneinfo/UTC /mnt/mt-live/etc/localtime
+echo "UTC" | sudo tee /mnt/mt-live/etc/timezone
+sudo ln -sf /usr/share/zoneinfo/UTC /mnt/mt-live/etc/localtime
 
 # Ensure ghost user exists and has proper permissions
-chroot /mnt/mt-live useradd -m -s /bin/bash -G sudo,audio,video,input ghost 2>/dev/null || true
-echo "ghost:ghost" | chroot /mnt/mt-live chpasswd
-echo "ghost ALL=(ALL) NOPASSWD:ALL" >> /mnt/mt-live/etc/sudoers || true
+sudo chroot /mnt/mt-live useradd -m -s /bin/bash -G sudo,audio,video,input ghost 2>/dev/null || true
+echo "ghost:ghost" | sudo chroot /mnt/mt-live chpasswd
+echo "ghost ALL=(ALL) NOPASSWD:ALL" | sudo tee -a /mnt/mt-live/etc/sudoers || true
 
 # Configure LightDM autologin
-mkdir -p /mnt/mt-live/etc/lightdm
-cat > /mnt/mt-live/etc/lightdm/lightdm.conf << 'LIGHTDM'
+sudo mkdir -p /mnt/mt-live/etc/lightdm
+sudo tee /mnt/mt-live/etc/lightdm/lightdm.conf << LIGHTDM
 [Seat:*]
 autologin-user=ghost
 autologin-user-timeout=0
@@ -269,12 +269,12 @@ user-session=openbox
 LIGHTDM
 
 # Ensure MT-OS directories exist
-mkdir -p /mnt/mt-live/opt/mt-os
-mkdir -p /mnt/mt-live/etc/mt-os
+sudo mkdir -p /mnt/mt-live/opt/mt-os
+sudo mkdir -p /mnt/mt-live/etc/mt-os
 
 # Create empty ghost commands file
-echo "{}" > /mnt/mt-live/etc/mt-os/ghost-commands.json
-chmod 666 /mnt/mt-live/etc/mt-os/ghost-commands.json
+echo "{}" | sudo tee /mnt/mt-live/etc/mt-os/ghost-commands.json
+sudo chmod 666 /mnt/mt-live/etc/mt-os/ghost-commands.json
 
 echo ""
 echo "=========================================="
@@ -282,21 +282,21 @@ echo "Step 7: Finalizing installation..."
 echo "=========================================="
 
 # Unmount boot partition
-umount /mnt/mt-live/boot
+sudo umount /mnt/mt-live/boot || true
 
 # Unmount virtual filesystems
-for d in sys proc dev/pts dev; do umount /mnt/mt-live/$d 2>/dev/null || true; done
+for d in sys proc dev/pts dev; do sudo umount /mnt/mt-live/$d 2>/dev/null || true; done
 
 # Mount and configure persistence
-mount "$P3" /mnt/mt-persist
-echo "/ union" > /mnt/mt-persist/persistence.conf
-umount /mnt/mt-persist
+sudo mount "$P3" /mnt/mt-persist || true
+echo "/ union" | sudo tee /mnt/mt-persist/persistence.conf
+sudo umount /mnt/mt-persist || true
 
 # Final unmount
-umount /mnt/mt-live
+sudo umount /mnt/mt-live || true
 
 # Cleanup
-rmdir /mnt/mt-live /mnt/mt-persist 2>/dev/null || true
+sudo rmdir /mnt/mt-live /mnt/mt-persist 2>/dev/null || true
 
 echo ""
 echo "=========================================="
