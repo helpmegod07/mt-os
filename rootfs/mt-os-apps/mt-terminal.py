@@ -138,6 +138,15 @@ class Term:
             elif w == "status":
                 self._p("Checking repository status...\n", "ai")
                 threading.Thread(target=self._run, args=("git status",), daemon=True).start()
+            elif w == "battery":
+                self._p("Checking battery status...\n", "ai")
+                threading.Thread(target=self._run, args=("acpi -b",), daemon=True).start()
+            elif w == "cpu":
+                self._p("Checking CPU usage...\n", "ai")
+                threading.Thread(target=self._run, args=("python3 -c \"import psutil; print(f\"CPU Usage: {psutil.cpu_percent()}%\")\"",), daemon=True).start()
+            elif w == "ram":
+                self._p("Checking RAM usage...\n", "ai")
+                threading.Thread(target=self._run, args=("python3 -c \"import psutil; mem = psutil.virtual_memory(); print(f\"RAM Usage: {mem.percent}% ({mem.used / (1024**2):.0f}MB/{mem.total / (1024**2):.0f}MB)\")\"",), daemon=True).start()
             elif w in cmds:
                 for c in cmds[w]: self._p(f"▶ {c}\n","ok"); subprocess.Popen(c,shell=True,cwd=self.cwd)
                 speak_to_face(f"Running ghost command {w}")

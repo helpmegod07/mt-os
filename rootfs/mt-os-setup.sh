@@ -56,7 +56,7 @@ apt-get install -y --no-install-recommends --fix-missing \
         python3-pil zlib1g-dev libjpeg-dev
     }
 
-pip3 install --no-cache-dir requests speechrecognition pyttsx3
+pip3 install --no-cache-dir requests speechrecognition pyttsx3 psutil
 
 # User setup
 useradd -m -s /bin/bash -G sudo,audio,video,input ghost 2>/dev/null || true
