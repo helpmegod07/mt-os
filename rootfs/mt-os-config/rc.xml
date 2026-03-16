@@ -4,27 +4,15 @@
   <focus><focusNew>yes</focusNew><followMouse>no</followMouse></focus>
   <desktops><number>4</number></desktops>
   <margins><top>0</top><bottom>28</bottom><left>0</left><right>0</right></margins>
-  <keyboard>
-    <keybind key="C-A-t"><action name="Execute"><command>python3 /opt/mt-os/mt-terminal.py</command></action></keybind>
-    <keybind key="C-A-g"><action name="Execute"><command>python3 /opt/mt-os/mt-face.py</command></action></keybind>
-    <keybind key="C-A-f"><action name="Execute"><command>firefox-esr</command></action></keybind>
-    <keybind key="C-A-d"><action name="Execute"><command>python3 /opt/mt-os/mt-display.py</command></action></keybind>
-    <keybind key="C-A-x"><action name="Execute"><command>xterm</command></action></keybind>
-    <keybind key="C-F1"><action name="GoToDesktop"><to>1</to></action></keybind>
-    <keybind key="C-F2"><action name="GoToDesktop"><to>2</to></action></keybind>
-    <keybind key="C-F3"><action name="GoToDesktop"><to>3</to></action></keybind>
-    <keybind key="C-F4"><action name="GoToDesktop"><to>4</to></action></keybind>
-    <keybind key="Super-Left"><action name="MoveResizeTo"><x>0</x><y>0</y><width>50%</width><height>100%</height></action></keybind>
-    <keybind key="Super-Right"><action name="MoveResizeTo"><x>50%</x><y>0</y><width>50%</width><height>100%</height></action></keybind>
-    <keybind key="C-A-r"><action name="Reconfigure"/></keybind>
-  </keyboard>
-  <mouse>
-    <context name="Desktop">
-      <mousebind button="Right" action="Press"><action name="ShowMenu"><menu>root-menu</menu></action></mousebind>
-    </context>
-    <context name="Titlebar">
-      <mousebind button="Left" action="Drag"><action name="Move"/></mousebind>
-      <mousebind button="Left" action="DoubleClick"><action name="ToggleMaximize"/></mousebind>
-    </context>
-  </mouse>
-</openbox_config>
+  <theme>
+  <name>Clearlooks</name>
+  <titleLayout>LIMC</titleLayout> <!-- L:Logo, I:Icon, M:Maximize, C:Close -->
+  <keepBorder>yes</keepBorder>
+</theme>
+
+<keyboard>
+  <keybind key="A-F4"><action name="Close"/></keybind>
+  <keybind key="A-Tab"><action name="NextWindow"/></keybind>
+  <keybind key="W-Up"><action name="Maximize"/></keybind>
+  <keybind key="W-Down"><action name="Unmaximize"/></keybind>
+</keyboard>
