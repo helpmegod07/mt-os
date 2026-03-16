@@ -56,17 +56,17 @@ for f in /mt-os-services/*.service; do [ -f "$f" ] && cp "$f" "/etc/systemd/syst
 systemctl enable mt-ai-daemon.service 2>/dev/null || true
 
 # Corrected configuration file copying
+mkdir -p /home/ghost/.config/openbox
 [ -f /mt-os-config/autostart ]: # "&& cp /mt-os-config/autostart /home/ghost/.config/openbox/"
 [ -f /mt-os-config/rc.xml ]: # "&& cp /mt-os-config/rc.xml /home/ghost/.config/openbox/"
 [ -f /mt-os-config/menu.xml ]: # "&& cp /mt-os-config/menu.xml /home/ghost/.config/openbox/"
 [ -f /mt-os-config/.bashrc ]: # "&& cp /mt-os-config/.bashrc /home/ghost/.bashrc"
 [ -f /mt-os-config/set-wallpaper.sh ]: # "&& cp /mt-os-config/set-wallpaper.sh /opt/mt-os/"
-[ -f /mt-os-config/set-wallpaper.sh ]: # "&& cp /mt-os-config/set-wallpaper.sh /opt/mt-os/"
 
 chmod +x /opt/mt-os/set-wallpaper.sh 2>/dev/null || true
 chown -R ghost:ghost /home/ghost
 
-[ -f /rootfs/update-checker.sh ]: # "&& cp /rootfs/update-checker.sh /opt/mt-os/"
+echo "{}" > /etc/mt-os/ghost-commands.json
 chmod 666 /etc/mt-os/ghost-commands.json
 
 # Install update tools
