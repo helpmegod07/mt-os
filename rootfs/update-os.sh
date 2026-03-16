@@ -25,7 +25,7 @@ echo "Applying updates..."
 # Install missing dependencies (like feh and time tools)
 echo "Checking for missing dependencies..."
 sudo apt-get update -qq
-sudo apt-get install -y --no-install-recommends feh picom python3-pil tzdata ntpdate 2>/dev/null
+sudo apt-get install -y --no-install-recommends feh picom python3-pil tzdata ntpdate parted rsync dosfstools 2>/dev/null
 
 # Update Apps
 if [ -d "$TEMP_DIR/rootfs/mt-os-apps" ]; then

@@ -12,6 +12,22 @@ error_handler() {
 trap 'error_handler $LINENO' ERR
 
 echo "MT-OS Persistent Install"
+
+# Check for required tools
+MISSING=()
+for tool in parted mkfs.ext4 rsync blkid; do
+    if ! command -v $tool &> /dev/null; then
+        MISSING+=($tool)
+    fi
+done
+
+if [ ${#MISSING[@]} -ne 0 ]; then
+    echo "Error: The following required tools are missing: ${MISSING[*]}"
+    echo "Please run 'sudo apt-get update && sudo apt-get install -y ${MISSING[*]}' first."
+    read -p "Press Enter to exit..."
+    exit 1
+fi
+
 lsblk -d -o NAME,SIZE,MODEL
 read -p "Target disk (e.g. sda): " DISK_INPUT
 DISK="/dev/$DISK_INPUT"
