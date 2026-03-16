@@ -35,7 +35,7 @@ apt-get install -y --no-install-recommends --fix-missing \
     dunst libnotify-bin \
     tzdata ntpdate \
     build-essential python3-dev \
-    gcc-i686-linux-gnu g++-i686-linux-gnu \
+    gcc-i686-linux-gnu g++-i686-linux-gnu libc6-dev-i386 \
     python3-pil zlib1g-dev libjpeg-dev || {
     echo "First attempt failed, retrying with --fix-missing..."
     sleep 10
@@ -56,12 +56,14 @@ apt-get install -y --no-install-recommends --fix-missing \
         dunst libnotify-bin \
         tzdata ntpdate \
         build-essential python3-dev \
-        gcc-i686-linux-gnu g++-i686-linux-gnu \
+        gcc-i686-linux-gnu g++-i686-linux-gnu libc6-dev-i386 \
         python3-pil zlib1g-dev libjpeg-dev
     }
 
-# Ensure build tools are recognized before pip installation
+# Ensure build tools are recognized and used before pip installation
 export PATH=$PATH:/usr/bin
+export CC=i686-linux-gnu-gcc
+export CXX=i686-linux-gnu-g++
 pip3 install --no-cache-dir requests speechrecognition pyttsx3 psutil
 
 # User setup
