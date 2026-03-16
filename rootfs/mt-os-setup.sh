@@ -82,28 +82,30 @@ LGDM
 
 # Copy apps and services
 mkdir -p /opt/mt-os /etc/mt-os
-# Use -r to copy everything and ensure scripts are executable
-# Check both /rootfs and local rootfs directory
-if [ -d "/rootfs/mt-os-apps" ]; then
-    cp -rf /rootfs/mt-os-apps/* /opt/mt-os/
-elif [ -d "./rootfs/mt-os-apps" ]; then
-    cp -rf ./rootfs/mt-os-apps/* /opt/mt-os/
+# In the chroot, files are at the root as per build.yml
+if [ -d "/mt-os-apps" ]; then
+    cp -rf /mt-os-apps/* /opt/mt-os/
 fi
 chmod +x /opt/mt-os/*.sh /opt/mt-os/*.py 2>/dev/null || true
 
-for f in /mt-os-services/*.service; do test -f "$f" && cp "$f" "/etc/systemd/system/"; done
+if [ -d "/mt-os-services" ]; then
+    for f in /mt-os-services/*.service; do 
+        test -f "$f" && cp "$f" "/etc/systemd/system/"
+    done
+fi
 systemctl enable mt-ai-daemon.service 2>/dev/null || true
 
-# Corrected configuration file copying
+# Configuration file copying
 mkdir -p /home/ghost/.config/openbox
-CONFIG_DIR="$ROOTFS_DIR/mt-os-config"
-test -f "$CONFIG_DIR/autostart" && cp "$CONFIG_DIR/autostart" /home/ghost/.config/openbox/
-test -f "$CONFIG_DIR/rc.xml" && cp "$CONFIG_DIR/rc.xml" /home/ghost/.config/openbox/
-test -f "$CONFIG_DIR/menu.xml" && cp "$CONFIG_DIR/menu.xml" /home/ghost/.config/openbox/
-test -f "$CONFIG_DIR/.bashrc" && cp "$CONFIG_DIR/.bashrc" /home/ghost/.bashrc
-test -f "$CONFIG_DIR/set-wallpaper.sh" && cp "$CONFIG_DIR/set-wallpaper.sh" /opt/mt-os/
+CONFIG_DIR="/mt-os-config"
+if [ -d "$CONFIG_DIR" ]; then
+    test -f "$CONFIG_DIR/autostart" && cp "$CONFIG_DIR/autostart" /home/ghost/.config/openbox/
+    test -f "$CONFIG_DIR/rc.xml" && cp "$CONFIG_DIR/rc.xml" /home/ghost/.config/openbox/
+    test -f "$CONFIG_DIR/menu.xml" && cp "$CONFIG_DIR/menu.xml" /home/ghost/.config/openbox/
+    test -f "$CONFIG_DIR/.bashrc" && cp "$CONFIG_DIR/.bashrc" /home/ghost/.bashrc
+    test -f "$CONFIG_DIR/set-wallpaper.sh" && cp "$CONFIG_DIR/set-wallpaper.sh" /opt/mt-os/
+fi
 chmod +x /home/ghost/.config/openbox/autostart 2>/dev/null || true
-
 chmod +x /opt/mt-os/set-wallpaper.sh 2>/dev/null || true
 chown -R ghost:ghost /home/ghost
 
@@ -111,37 +113,16 @@ echo "{}" > /etc/mt-os/ghost-commands.json
 chmod 666 /etc/mt-os/ghost-commands.json
 
 # Install update tools
-# Robustly find the rootfs directory relative to the script
-SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-# Try to find the rootfs directory
-if [ -d "/rootfs" ]; then
-    ROOTFS_DIR="/rootfs"
-elif [ -d "$SCRIPT_DIR/rootfs" ]; then
-    ROOTFS_DIR="$SCRIPT_DIR/rootfs"
-elif [ -f "$SCRIPT_DIR/update-os.sh" ]; then
-    ROOTFS_DIR="$SCRIPT_DIR"
-else
-    ROOTFS_DIR="."
-fi
-
-echo "Using rootfs directory: $ROOTFS_DIR"
-
-# Ensure /opt/mt-os exists
-mkdir -p /opt/mt-os
-
-# Copy and set up update-checker
-if [ -f "$ROOTFS_DIR/update-checker.sh" ]; then
-    cp "$ROOTFS_DIR/update-checker.sh" /opt/mt-os/
+# In the chroot, update scripts are at the root
+if [ -f "/update-checker.sh" ]; then
+    cp "/update-checker.sh" /opt/mt-os/
     chmod +x /opt/mt-os/update-checker.sh
 fi
 
-# Copy and set up update-os
-if [ -f "$ROOTFS_DIR/update-os.sh" ]; then
-    cp "$ROOTFS_DIR/update-os.sh" /opt/mt-os/update-os.sh
+if [ -f "/update-os.sh" ]; then
+    cp "/update-os.sh" /opt/mt-os/update-os.sh
     chmod +x /opt/mt-os/update-os.sh
-    # Create a symbolic link in /usr/local/bin
     ln -sf /opt/mt-os/update-os.sh /usr/local/bin/update-os
-    chmod +x /usr/local/bin/update-os
 fi
 
 echo "Setup complete."

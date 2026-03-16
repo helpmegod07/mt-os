@@ -16,6 +16,9 @@ if [ $? -ne 0 ]; then
     exit 1
 fi
 
+# Get the latest commit hash
+REMOTE_HASH=$(cd $TEMP_DIR && git rev-parse HEAD)
+
 # 2. Sync files to the live system
 echo "Applying updates..."
 
@@ -44,6 +47,10 @@ if [ -d "$TEMP_DIR/rootfs/mt-os-services" ]; then
     sudo cp $TEMP_DIR/rootfs/mt-os-services/*.service /etc/systemd/system/ 2>/dev/null
     sudo systemctl daemon-reload
 fi
+
+# Update version file
+sudo mkdir -p /etc/mt-os
+echo "$REMOTE_HASH" | sudo tee /etc/mt-os/version > /dev/null
 
 # 3. Cleanup
 rm -rf $TEMP_DIR
