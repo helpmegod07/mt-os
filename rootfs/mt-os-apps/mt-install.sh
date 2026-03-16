@@ -16,7 +16,7 @@ trap 'error_handler $LINENO' ERR
 
 echo "MT-OS Persistent Install"
 
-# Check for required tools
+# Check for required tools and attempt to install them if missing
 MISSING_TOOLS=()
 for tool in parted mkfs.ext4 rsync blkid wipefs; do
     if ! command -v $tool &> /dev/null; then
@@ -25,13 +25,29 @@ for tool in parted mkfs.ext4 rsync blkid wipefs; do
 done
 
 if [ ${#MISSING_TOOLS[@]} -ne 0 ]; then
-    echo "Error: The following required tools are missing: ${MISSING_TOOLS[*]}"
-    echo ""
-    echo "To fix this, please run:"
-    echo "sudo apt-get update && sudo apt-get install -y parted rsync e2fsprogs util-linux"
-    echo ""
-    read -p "Press Enter to exit..."
-    exit 1
+    echo "The following required tools are missing: ${MISSING_TOOLS[*]}"
+    echo "Attempting to resolve automatically..."
+    
+    # Step 1: Resolve apt-get Permission Errors (from Troubleshooting Guide)
+    echo "Cleaning up package manager locks..."
+    sudo rm -f /var/lib/apt/lists/lock
+    sudo rm -f /var/cache/apt/archives/lock
+    sudo rm -f /var/lib/dpkg/lock
+    sudo rm -f /var/lib/dpkg/lock-frontend
+    
+    echo "Reconfiguring dpkg..."
+    sudo dpkg --configure -a
+    
+    echo "Updating package lists and installing missing tools..."
+    sudo apt-get update
+    if sudo apt-get install -y parted rsync e2fsprogs util-linux; then
+        echo "Successfully installed missing tools."
+    else
+        echo "Error: Failed to install missing tools automatically."
+        echo "Please run: sudo apt-get update && sudo apt-get install -y parted rsync e2fsprogs util-linux"
+        read -p "Press Enter to exit..."
+        exit 1
+    fi
 fi
 
 lsblk -d -o NAME,SIZE,MODEL

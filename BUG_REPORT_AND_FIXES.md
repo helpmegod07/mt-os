@@ -144,3 +144,21 @@
 - This ensures that even if the live system has auto-mounted a partition, the installer can safely proceed.
 
 ---
+
+---
+
+### 6. **Senary Issue: Package Manager Locks and Missing Tools**
+
+**Root Cause:**
+- The installation could fail if the system had stale `apt` or `dpkg` lock files, preventing the installation of required tools like `rsync` or `parted`.
+- Previously, the script would only report missing tools and exit, requiring manual user intervention.
+
+**Impact:**
+- Users were unable to proceed with the installation if dependencies were missing and the package manager was locked.
+
+**Fix Applied (based on MT-OS Troubleshooting Guide):**
+- Added automatic cleanup of `apt` and `dpkg` lock files (`/var/lib/apt/lists/lock`, etc.) if tools are missing.
+- Added automatic execution of `dpkg --configure -a` to resolve interrupted package configurations.
+- The script now attempts to automatically install missing dependencies (`parted`, `rsync`, `e2fsprogs`, `util-linux`) before proceeding, rather than just exiting.
+
+---
