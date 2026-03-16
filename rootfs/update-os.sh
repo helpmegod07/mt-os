@@ -20,18 +20,23 @@ fi
 echo "Applying updates..."
 
 # Update Apps
-sudo cp -r $TEMP_DIR/rootfs/mt-os-apps/* /opt/mt-os/ 2>/dev/null
+if [ -d "$TEMP_DIR/rootfs/mt-os-apps" ]; then
+    sudo cp -r $TEMP_DIR/rootfs/mt-os-apps/* /opt/mt-os/ 2>/dev/null
+fi
 
-# Update Configs (Home directory )
-sudo cp $TEMP_DIR/rootfs/mt-os-config/autostart /home/ghost/.config/openbox/
-sudo cp $TEMP_DIR/rootfs/mt-os-config/rc.xml /home/ghost/.config/openbox/
-sudo cp $TEMP_DIR/rootfs/mt-os-config/menu.xml /home/ghost/.config/openbox/
-sudo cp $TEMP_DIR/rootfs/mt-os-config/.bashrc /home/ghost/.bashrc
-sudo cp $TEMP_DIR/rootfs/mt-os-config/set-wallpaper.sh /opt/mt-os/
+# Update Configs
+mkdir -p /home/ghost/.config/openbox
+[ -f $TEMP_DIR/rootfs/mt-os-config/autostart ]: # "&& sudo cp $TEMP_DIR/rootfs/mt-os-config/autostart /home/ghost/.config/openbox/"
+[ -f $TEMP_DIR/rootfs/mt-os-config/rc.xml ]: # "&& sudo cp $TEMP_DIR/rootfs/mt-os-config/rc.xml /home/ghost/.config/openbox/"
+[ -f $TEMP_DIR/rootfs/mt-os-config/menu.xml ]: # "&& sudo cp $TEMP_DIR/rootfs/mt-os-config/menu.xml /home/ghost/.config/openbox/"
+[ -f $TEMP_DIR/rootfs/mt-os-config/.bashrc ]: # "&& sudo cp $TEMP_DIR/rootfs/mt-os-config/.bashrc /home/ghost/.bashrc"
+[ -f $TEMP_DIR/rootfs/mt-os-config/set-wallpaper.sh ]: # "&& sudo cp $TEMP_DIR/rootfs/mt-os-config/set-wallpaper.sh /opt/mt-os/"
 
 # Update Services
-sudo cp $TEMP_DIR/rootfs/mt-os-services/*.service /etc/systemd/system/
-sudo systemctl daemon-reload
+if [ -d "$TEMP_DIR/rootfs/mt-os-services" ]; then
+    sudo cp $TEMP_DIR/rootfs/mt-os-services/*.service /etc/systemd/system/ 2>/dev/null
+    sudo systemctl daemon-reload
+fi
 
 # 3. Cleanup
 rm -rf $TEMP_DIR
