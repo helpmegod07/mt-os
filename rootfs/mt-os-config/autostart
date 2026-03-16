@@ -5,3 +5,5 @@ lxpanel --profile mt-os &
 sleep 2 && python3 /opt/mt-os/mt-face.py &
 sleep 3 && python3 /opt/mt-os/mt-terminal.py &
 pulseaudio --start &
+dunst &
+bash /opt/mt-os/update-checker.sh &
