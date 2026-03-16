@@ -2,7 +2,9 @@
 set -e
 export DEBIAN_FRONTEND=noninteractive
 
+# Fix hostname and sudo resolution
 echo "MT-OS" > /etc/hostname
+echo "127.0.1.1 MT-OS" >> /etc/hosts
 
 cat > /etc/apt/sources.list << 'SOURCES'
 deb http://deb.debian.org/debian bullseye main contrib non-free
@@ -11,7 +13,7 @@ SOURCES
 
 apt-get update -qq
 
-# Combined install command for all packages
+# Install all required packages
 apt-get install -y --no-install-recommends \
     linux-image-686 live-boot systemd systemd-sysv \
     udev dbus network-manager sudo passwd \
@@ -31,10 +33,12 @@ apt-get install -y --no-install-recommends \
 
 pip3 install --no-cache-dir anthropic speechrecognition pyttsx3 requests
 
+# User setup
 useradd -m -s /bin/bash -G sudo,audio,video,input ghost 2>/dev/null || true
 echo "ghost:ghost" | chpasswd
-echo "ghost ALL=(ALL  ) NOPASSWD:ALL" >> /etc/sudoers
+echo "ghost ALL=(ALL ) NOPASSWD:ALL" >> /etc/sudoers
 
+# LightDM setup
 mkdir -p /etc/lightdm
 cat > /etc/lightdm/lightdm.conf << 'LGDM'
 [Seat:*]
@@ -43,20 +47,21 @@ autologin-user-timeout=0
 user-session=openbox
 LGDM
 
+# Copy apps and services
 mkdir -p /opt/mt-os /etc/mt-os
-for f in /mt-os-apps/*; do test -f "$f" && cp "$f" "/opt/mt-os/"; done
+for f in /mt-os-apps/*; do [ -f "$f" ] && cp "$f" "/opt/mt-os/"; done
 chmod +x /opt/mt-os/*.sh 2>/dev/null || true
 
-for f in /mt-os-services/*.service; do test -f "$f" && cp "$f" "/etc/systemd/system/"; done
+for f in /mt-os-services/*.service; do [ -f "$f" ] && cp "$f" "/etc/systemd/system/"; done
 systemctl enable mt-ai-daemon.service 2>/dev/null || true
 
 # Corrected configuration file copying
 mkdir -p /home/ghost/.config/openbox
-test -f /mt-os-config/autostart && cp /mt-os-config/autostart /home/ghost/.config/openbox/
-test -f /mt-os-config/rc.xml && cp /mt-os-config/rc.xml /home/ghost/.config/openbox/
-test -f /mt-os-config/menu.xml && cp /mt-os-config/menu.xml /home/ghost/.config/openbox/
-test -f /mt-os-config/.bashrc && cp /mt-os-config/.bashrc /home/ghost/.bashrc
-test -f /mt-os-config/set-wallpaper.sh && cp /mt-os-config/set-wallpaper.sh /opt/mt-os/
+[ -f /mt-os-config/autostart ]: # "&& cp /mt-os-config/autostart /home/ghost/.config/openbox/"
+[ -f /mt-os-config/rc.xml ]: # "&& cp /mt-os-config/rc.xml /home/ghost/.config/openbox/"
+[ -f /mt-os-config/menu.xml ]: # "&& cp /mt-os-config/menu.xml /home/ghost/.config/openbox/"
+[ -f /mt-os-config/.bashrc ]: # "&& cp /mt-os-config/.bashrc /home/ghost/.bashrc"
+[ -f /mt-os-config/set-wallpaper.sh ]: # "&& cp /mt-os-config/set-wallpaper.sh /opt/mt-os/"
 
 chmod +x /opt/mt-os/set-wallpaper.sh 2>/dev/null || true
 chown -R ghost:ghost /home/ghost
@@ -64,12 +69,11 @@ chown -R ghost:ghost /home/ghost
 echo "{}" > /etc/mt-os/ghost-commands.json
 chmod 666 /etc/mt-os/ghost-commands.json
 
-# Install the update checker
-test -f /rootfs/update-checker.sh && cp /rootfs/update-checker.sh /opt/mt-os/
+# Install update tools
+[ -f /rootfs/update-checker.sh ]: # "&& cp /rootfs/update-checker.sh /opt/mt-os/"
 chmod +x /opt/mt-os/update-checker.sh 2>/dev/null || true
 
-# Install the update-os command
-test -f /rootfs/update-os.sh && cp /rootfs/update-os.sh /usr/local/bin/update-os
+[ -f /rootfs/update-os.sh ]: # "&& cp /rootfs/update-os.sh /usr/local/bin/update-os"
 chmod +x /usr/local/bin/update-os 2>/dev/null || true
 
 echo "Setup complete."
