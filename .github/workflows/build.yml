@@ -46,6 +46,33 @@ jobs:
         sudo mount --bind /proc    /tmp/chroot/proc
         sudo mount --bind /sys     /tmp/chroot/sys
         sudo chroot /tmp/chroot /bin/bash /mt-os-setup.sh
+        sudo chroot /tmp/chroot /bin/bash -c "
+          mkdir -p /usr/share/themes/MT-OS/openbox-3
+          cat > /usr/share/themes/MT-OS/openbox-3/themerc << 'THEME'
+window.active.title.bg: flat solid
+window.active.title.bg.color: #003300
+window.active.label.text.color: #00FF88
+window.active.button.unpressed.bg: flat solid
+window.active.button.unpressed.bg.color: #005500
+window.active.button.unpressed.image.color: #00FF88
+window.active.button.hover.bg: flat solid
+window.active.button.hover.bg.color: #FF0000
+window.active.button.hover.image.color: #FFFFFF
+window.inactive.title.bg: flat solid
+window.inactive.title.bg.color: #0A0A0F
+window.inactive.label.text.color: #444444
+window.inactive.button.unpressed.bg: flat solid
+window.inactive.button.unpressed.bg.color: #1A1A1A
+window.inactive.button.unpressed.image.color: #444444
+window.active.border.color: #00FF88
+window.inactive.border.color: #333333
+window.client.padding.width: 2
+window.handle.width: 4
+padding.width: 6
+padding.height: 6
+THEME
+          sed -i 's|<name>.*</name>|<name>MT-OS</name>|' /home/ghost/.config/openbox/rc.xml
+        "
         for d in sys proc dev/pts dev; do sudo umount /tmp/chroot/$d 2>/dev/null||true; done
 
     - name: Build squashfs
