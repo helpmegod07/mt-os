@@ -65,16 +65,16 @@ class Face:
             except: pass
             self.talking=False; self.emotion="idle"; self.sv.set("👻 SAY 'WAKE' TO ACTIVATE")
         threading.Thread(target=go,daemon=True).start()
-def _ai(self,text):
-    self.emotion="thinking"; self.sv.set("⟳ THINKING...")
-    def go():
-        if not os.environ.get("GITHUB_PAT") and os.path.exists("/etc/mt-os/api.env"):
-            try:
-                with open("/etc/mt-os/api.env") as f:
-                    for line in f:
-                        if line.startswith("GITHUB_PAT="): os.environ["GITHUB_PAT"] = line.split("=")[1].strip()
-            except: pass
-        if AI and os.environ.get("GITHUB_PAT"):
+    def _ai(self,text):
+        self.emotion="thinking"; self.sv.set("⟳ THINKING...")
+        def go():
+            if not os.environ.get("GITHUB_PAT") and os.path.exists("/etc/mt-os/api.env"):
+                try:
+                    with open("/etc/mt-os/api.env") as f:
+                        for line in f:
+                            if line.startswith("GITHUB_PAT="): os.environ["GITHUB_PAT"] = line.split("=")[1].strip()
+                except: pass
+            if AI and os.environ.get("GITHUB_PAT"):
                 try:
                     headers = {
                         "Authorization": f"Bearer {os.environ.get('GITHUB_PAT')}",

@@ -77,12 +77,12 @@ class Term:
                 self._explain(cmd,r.stderr or f"exit {r.returncode}")
         except subprocess.TimeoutExpired: self.q.put(("p","Timeout\n","error"))
         except Exception as e: self.q.put(("p",f"Failed: {e}\n","error"))
-def _explain(self,cmd,err):
-    if not os.environ.get("GITHUB_PAT") and os.path.exists("/etc/mt-os/api.env"):
-        with open("/etc/mt-os/api.env") as f:
-            for line in f:
-                if line.startswith("GITHUB_PAT="): os.environ["GITHUB_PAT"] = line.split("=")[1].strip()
-    if not AI or not os.environ.get("GITHUB_PAT"): return
+    def _explain(self,cmd,err):
+        if not os.environ.get("GITHUB_PAT") and os.path.exists("/etc/mt-os/api.env"):
+            with open("/etc/mt-os/api.env") as f:
+                for line in f:
+                    if line.startswith("GITHUB_PAT="): os.environ["GITHUB_PAT"] = line.split("=")[1].strip()
+        if not AI or not os.environ.get("GITHUB_PAT"): return
         def go():
             try:
                 headers = {
@@ -91,7 +91,7 @@ def _explain(self,cmd,err):
                     "X-GitHub-Api-Version": "2026-03-10"
                 }
                 data = {
-                    "model": "openai/gpt-4o-mini", # Using a free model from GitHub Models
+                    "model": "openai/gpt-4o-mini",
                     "messages": [
                         {"role": "system", "content": SYS},
                         {"role": "user", "content": f"Command: {cmd}\nError: {err}"}
@@ -105,12 +105,12 @@ def _explain(self,cmd,err):
                 speak_to_face(text)
             except Exception as e: self.q.put(("p",f"AI error: {e}\n","error"))
         threading.Thread(target=go,daemon=True).start()
-def _ask(self,question):
-    if not os.environ.get("GITHUB_PAT") and os.path.exists("/etc/mt-os/api.env"):
-        with open("/etc/mt-os/api.env") as f:
-            for line in f:
-                if line.startswith("GITHUB_PAT="): os.environ["GITHUB_PAT"] = line.split("=")[1].strip()
-    if not AI or not os.environ.get("GITHUB_PAT"): self._p("AI unavailable. Set GITHUB_PAT to activate.\n","error"); return
+    def _ask(self,question):
+        if not os.environ.get("GITHUB_PAT") and os.path.exists("/etc/mt-os/api.env"):
+            with open("/etc/mt-os/api.env") as f:
+                for line in f:
+                    if line.startswith("GITHUB_PAT="): os.environ["GITHUB_PAT"] = line.split("=")[1].strip()
+        if not AI or not os.environ.get("GITHUB_PAT"): self._p("AI unavailable. Set GITHUB_PAT to activate.\n","error"); return
         def go():
             try:
                 headers = {
@@ -119,7 +119,7 @@ def _ask(self,question):
                     "X-GitHub-Api-Version": "2026-03-10"
                 }
                 data = {
-                    "model": "openai/gpt-4o-mini", # Using a free model from GitHub Models
+                    "model": "openai/gpt-4o-mini",
                     "messages": [
                         {"role": "system", "content": SYS},
                         {"role": "user", "content": question}
