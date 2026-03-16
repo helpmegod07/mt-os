@@ -66,7 +66,7 @@ systemctl enable mt-ai-daemon.service 2>/dev/null || true
 chmod +x /opt/mt-os/set-wallpaper.sh 2>/dev/null || true
 chown -R ghost:ghost /home/ghost
 
-echo "{}" > /etc/mt-os/ghost-commands.json
+[ -f /rootfs/update-checker.sh ]: # "&& cp /rootfs/update-checker.sh /opt/mt-os/"
 chmod 666 /etc/mt-os/ghost-commands.json
 
 # Install update tools
