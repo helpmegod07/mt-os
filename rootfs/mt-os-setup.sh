@@ -208,7 +208,11 @@ fi
 if [ -f "/update-os.sh" ]; then
     cp "/update-os.sh" /opt/mt-os/update-os.sh
     chmod +x /opt/mt-os/update-os.sh
+    # Ensure /usr/local/bin exists and is in PATH
+    mkdir -p /usr/local/bin
     ln -sf /opt/mt-os/update-os.sh /usr/local/bin/update-os
+    ln -sf /opt/mt-os/update-os.sh /usr/bin/update-os
+    chmod +x /usr/local/bin/update-os /usr/bin/update-os
 fi
 
 echo "Setup complete."

@@ -32,6 +32,8 @@ jobs:
         sudo mkdir -p /tmp/chroot/mt-os-config
         sudo mkdir -p /tmp/chroot/mt-os-services
         sudo cp rootfs/mt-os-setup.sh /tmp/chroot/
+        sudo cp rootfs/update-os.sh /tmp/chroot/
+        sudo cp rootfs/update-checker.sh /tmp/chroot/
         sudo cp rootfs/mt-os-apps/* /tmp/chroot/mt-os-apps/
         sudo cp rootfs/mt-os-config/autostart /tmp/chroot/mt-os-config/
         sudo cp rootfs/mt-os-config/rc.xml /tmp/chroot/mt-os-config/

@@ -65,9 +65,11 @@ fi
 rm -rf $TEMP_DIR
 # Ensure all scripts and python files are executable
 sudo chmod +x /opt/mt-os/*.sh /opt/mt-os/*.py /home/ghost/.config/openbox/autostart 2>/dev/null
-# Ensure update-os is correctly linked and executable
+# Ensure update-os is correctly linked and executable in multiple locations
+sudo mkdir -p /usr/local/bin
 sudo ln -sf /opt/mt-os/update-os.sh /usr/local/bin/update-os
-sudo chmod +x /usr/local/bin/update-os
+sudo ln -sf /opt/mt-os/update-os.sh /usr/bin/update-os
+sudo chmod +x /usr/local/bin/update-os /usr/bin/update-os
 sudo chown -R ghost:ghost /home/ghost /opt/mt-os
 
 # Reload Openbox to apply new rc.xml immediately
