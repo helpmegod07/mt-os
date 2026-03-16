@@ -1,12 +1,34 @@
 #!/bin/bash
 set -e
+
+# Error handling to keep window open
+error_handler() {
+    echo ""
+    echo "!!! ERROR: Installation failed at line $1 !!!"
+    echo "Check the messages above for details."
+    read -p "Press Enter to exit..."
+    exit 1
+}
+trap 'error_handler $LINENO' ERR
+
 echo "MT-OS Persistent Install"
 lsblk -d -o NAME,SIZE,MODEL
-read -p "Target disk (e.g. sda): " DISK
-DISK="/dev/$DISK"
-[ ! -b "$DISK" ] && { echo "Not found."; exit 1; }
-read -p "ERASE $DISK? Type YES: " C
-[ "$C" != "YES" ] && { echo "Aborted."; exit 0; }
+read -p "Target disk (e.g. sda): " DISK_INPUT
+DISK="/dev/$DISK_INPUT"
+if [ ! -b "$DISK" ]; then
+    echo "Error: Disk $DISK not found."
+    read -p "Press Enter to exit..."
+    exit 1
+fi
+
+read -p "ERASE $DISK? Type YES: " CONFIRM
+# Make confirmation case-insensitive
+CONFIRM_UPPER=$(echo "$CONFIRM" | tr '[:lower:]' '[:upper:]')
+if [ "$CONFIRM_UPPER" != "YES" ]; then
+    echo "Aborted by user."
+    read -p "Press Enter to exit..."
+    exit 0
+fi
 parted -s "$DISK" mklabel msdos
 parted -s "$DISK" mkpart primary ext4 1MiB 512MiB
 parted -s "$DISK" mkpart primary ext4 512MiB 5000MiB
@@ -60,5 +82,8 @@ mount "$P3" /mnt/mt-persist
 echo "/ union" > /mnt/mt-persist/persistence.conf
 umount /mnt/mt-persist
 umount /mnt/mt-live
-echo "Done! Remove media and reboot."
-read -p "Press Enter..."
+echo "--------------------------------------"
+echo "Done! MT-OS has been installed to $DISK."
+echo "Please remove your installation media and reboot."
+echo "--------------------------------------"
+read -p "Press Enter to exit..."
