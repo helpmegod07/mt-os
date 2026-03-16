@@ -65,26 +65,26 @@ class Face:
     def _ai(self,text):
         self.emotion="thinking"; self.sv.set("⟳ THINKING...")
         def go():
-                if AI and os.environ.get("GITHUB_PAT"):
-                    try:
-                        headers = {
-                            "Authorization": f"Bearer {os.environ.get("GITHUB_PAT")}",
-                            "Content-Type": "application/json",
-                            "X-GitHub-Api-Version": "2026-03-10"
-                        }
-                        data = {
-                            "model": "openai/gpt-4o-mini", # Using a free model from GitHub Models
-                            "messages": [
-                                {"role": "system", "content": "You are Ghost, the MT-OS AI. Old laptop spirit. Concise, helpful, mysterious. Under 30 words."},
-                                {"role": "user", "content": text}
-                            ],
-                            "max_tokens": 120
-                        }
-                        response = requests.post(GITHUB_MODELS_ENDPOINT, headers=headers, json=data)
-                        response.raise_for_status() # Raise an exception for HTTP errors
-                        reply = response.json()["choices"][0]["message"]["content"]
-                    except Exception as e: reply=f"Circuit glitch: {e}"
-                else: reply="Ghost offline. Set GITHUB_PAT to activate."
+            if AI and os.environ.get("GITHUB_PAT"):
+                try:
+                    headers = {
+                        "Authorization": f"Bearer {os.environ.get('GITHUB_PAT')}",
+                        "Content-Type": "application/json",
+                        "X-GitHub-Api-Version": "2026-03-10"
+                    }
+                    data = {
+                        "model": "openai/gpt-4o-mini",
+                        "messages": [
+                            {"role": "system", "content": "You are Ghost, the MT-OS AI. Old laptop spirit. Concise, helpful, mysterious. Under 30 words."},
+                            {"role": "user", "content": text}
+                        ],
+                        "max_tokens": 120
+                    }
+                    response = requests.post(GITHUB_MODELS_ENDPOINT, headers=headers, json=data)
+                    response.raise_for_status()
+                    reply = response.json()["choices"][0]["message"]["content"]
+                except Exception as e: reply=f"Circuit glitch: {e}"
+            else: reply="Ghost offline. Set GITHUB_PAT to activate."
             self.q.put({"type":"speak","text":reply})
         threading.Thread(target=go,daemon=True).start()
     def _typed(self,_):

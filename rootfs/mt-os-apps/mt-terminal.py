@@ -82,7 +82,7 @@ class Term:
         def go():
             try:
                 headers = {
-                    "Authorization": f"Bearer {os.environ.get("GITHUB_PAT")}",
+                    "Authorization": f"Bearer {os.environ.get('GITHUB_PAT')}",
                     "Content-Type": "application/json",
                     "X-GitHub-Api-Version": "2026-03-10"
                 }
@@ -106,7 +106,7 @@ class Term:
         def go():
             try:
                 headers = {
-                    "Authorization": f"Bearer {os.environ.get("GITHUB_PAT")}",
+                    "Authorization": f"Bearer {os.environ.get('GITHUB_PAT')}",
                     "Content-Type": "application/json",
                     "X-GitHub-Api-Version": "2026-03-10"
                 }
@@ -143,10 +143,10 @@ class Term:
                 threading.Thread(target=self._run, args=("acpi -b",), daemon=True).start()
             elif w == "cpu":
                 self._p("Checking CPU usage...\n", "ai")
-                threading.Thread(target=self._run, args=("python3 -c \"import psutil; print(f\"CPU Usage: {psutil.cpu_percent()}%\")\"",), daemon=True).start()
+                threading.Thread(target=self._run, args=("python3 -c \"import psutil; print('CPU Usage: {}%'.format(psutil.cpu_percent()))\"",), daemon=True).start()
             elif w == "ram":
                 self._p("Checking RAM usage...\n", "ai")
-                threading.Thread(target=self._run, args=("python3 -c \"import psutil; mem = psutil.virtual_memory(); print(f\"RAM Usage: {mem.percent}% ({mem.used / (1024**2):.0f}MB/{mem.total / (1024**2):.0f}MB)\")\"",), daemon=True).start()
+                threading.Thread(target=self._run, args=("python3 -c \"import psutil; mem = psutil.virtual_memory(); print('RAM Usage: {}% ({:.0f}MB/{:.0f}MB)'.format(mem.percent, mem.used / (1024**2), mem.total / (1024**2)))\"",), daemon=True).start()
             elif w in cmds:
                 for c in cmds[w]: self._p(f"▶ {c}\n","ok"); subprocess.Popen(c,shell=True,cwd=self.cwd)
                 speak_to_face(f"Running ghost command {w}")
