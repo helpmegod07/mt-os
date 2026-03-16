@@ -1,6 +1,9 @@
 #!/bin/bash
 set -e
 
+# Ensure disk tools in /sbin and /usr/sbin are in the PATH
+export PATH=$PATH:/sbin:/usr/sbin:/usr/local/sbin
+
 # Error handling to keep window open
 error_handler() {
     echo ""
