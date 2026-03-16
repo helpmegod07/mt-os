@@ -229,6 +229,13 @@ menuentry "MT-OS Safe Mode" {
     linux /$KERNEL_FILE root=UUID=$ROOT_UUID nomodeset noapic nosplash
     initrd /$INITRD_FILE
 }
+
+menuentry "MT-OS (Legacy BIOS Compatibility)" {
+    insmod ext2
+    set root=(hd0,msdos1)
+    linux /$KERNEL_FILE root=UUID=$ROOT_UUID quiet rw
+    initrd /$INITRD_FILE
+}
 GRUBCFG
 
 echo ""
