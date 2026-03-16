@@ -33,7 +33,7 @@ pip3 install --no-cache-dir anthropic speechrecognition pyttsx3 requests
 
 useradd -m -s /bin/bash -G sudo,audio,video,input ghost 2>/dev/null || true
 echo "ghost:ghost" | chpasswd
-echo "ghost ALL=(ALL ) NOPASSWD:ALL" >> /etc/sudoers
+echo "ghost ALL=(ALL  ) NOPASSWD:ALL" >> /etc/sudoers
 
 mkdir -p /etc/lightdm
 cat > /etc/lightdm/lightdm.conf << 'LGDM'
