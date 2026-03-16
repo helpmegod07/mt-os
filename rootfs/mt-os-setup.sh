@@ -11,7 +11,7 @@ SOURCES
 
 apt-get update -qq
 
-# We combined everything into one clean install command to avoid errors
+# Combined install command for all packages
 apt-get install -y --no-install-recommends \
     linux-image-686 live-boot systemd systemd-sysv \
     udev dbus network-manager sudo passwd \
@@ -50,12 +50,14 @@ chmod +x /opt/mt-os/*.sh 2>/dev/null || true
 for f in /mt-os-services/*.service; do [ -f "$f" ] && cp "$f" "/etc/systemd/system/"; done
 systemctl enable mt-ai-daemon.service 2>/dev/null || true
 
+# Corrected configuration file copying
 mkdir -p /home/ghost/.config/openbox
-[ -f /mt-os-config/autostart ]: # "&& cp /mt-os-config/autostart      /home/ghost/.config/openbox/"
-[ -f /mt-os-config/rc.xml ]: # "&& cp /mt-os-config/rc.xml         /home/ghost/.config/openbox/"
-[ -f /mt-os-config/menu.xml ]: # "&& cp /mt-os-config/menu.xml       /home/ghost/.config/openbox/"
-[ -f /mt-os-config/.bashrc ]: # "&& cp /mt-os-config/.bashrc        /home/ghost/.bashrc"
+[ -f /mt-os-config/autostart ]: # "&& cp /mt-os-config/autostart /home/ghost/.config/openbox/"
+[ -f /mt-os-config/rc.xml ]: # "&& cp /mt-os-config/rc.xml /home/ghost/.config/openbox/"
+[ -f /mt-os-config/menu.xml ]: # "&& cp /mt-os-config/menu.xml /home/ghost/.config/openbox/"
+[ -f /mt-os-config/.bashrc ]: # "&& cp /mt-os-config/.bashrc /home/ghost/.bashrc"
 [ -f /mt-os-config/set-wallpaper.sh ]: # "&& cp /mt-os-config/set-wallpaper.sh /opt/mt-os/"
+
 chmod +x /opt/mt-os/set-wallpaper.sh 2>/dev/null || true
 chown -R ghost:ghost /home/ghost
 
@@ -63,11 +65,11 @@ echo "{}" > /etc/mt-os/ghost-commands.json
 chmod 666 /etc/mt-os/ghost-commands.json
 
 # Install the update checker
-sudo cp /rootfs/update-checker.sh /opt/mt-os/ 2>/dev/null || true
-sudo chmod +x /opt/mt-os/update-checker.sh 2>/dev/null || true
+[ -f /rootfs/update-checker.sh ]: # "&& cp /rootfs/update-checker.sh /opt/mt-os/"
+chmod +x /opt/mt-os/update-checker.sh 2>/dev/null || true
 
-# The update-os command
-sudo cp /rootfs/update-os.sh /usr/local/bin/update-os 2>/dev/null || true
-sudo chmod +x /usr/local/bin/update-os 2>/dev/null || true
+# Install the update-os command
+[ -f /rootfs/update-os.sh ]: # "&& cp /rootfs/update-os.sh /usr/local/bin/update-os"
+chmod +x /usr/local/bin/update-os 2>/dev/null || true
 
 echo "Setup complete."
