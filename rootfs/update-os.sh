@@ -22,10 +22,11 @@ REMOTE_HASH=$(cd $TEMP_DIR && git rev-parse HEAD)
 # 2. Sync files to the live system
 echo "Applying updates..."
 
-# Install missing dependencies (like feh and time tools)
-echo "Checking for missing dependencies..."
+# Install missing dependencies and perform a full upgrade to resolve held-back packages
+echo "Checking for system updates and missing dependencies..."
 sudo apt-get update -qq
 sudo apt-get install -y --no-install-recommends feh picom python3-pil tzdata ntpdate parted rsync dosfstools 2>/dev/null
+sudo apt-get full-upgrade -y --no-install-recommends 2>/dev/null
 
 # Update Apps
 if [ -d "$TEMP_DIR/rootfs/mt-os-apps" ]; then
