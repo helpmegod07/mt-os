@@ -81,22 +81,47 @@ for d in dev dev/pts proc sys; do mount --bind /$d /mnt/mt-live/$d; done
 # Ensure /boot is mounted before grub-install
 mount "$P1" /mnt/mt-live/boot || { echo "Failed to mount $P1 to /boot"; exit 1; }
 
-echo "Installing bootloader..."
-# Force i386-pc for older 32-bit BIOS systems
-chroot /mnt/mt-live grub-install --target=i386-pc --force "$DISK"
-chroot /mnt/mt-live update-grub
-
-# Ensure the kernel is present in the new system
+# Ensure the kernel is present in the new system BEFORE installing GRUB
 if [ ! -f /mnt/mt-live/boot/vmlinuz* ]; then
     echo "Warning: No kernel found in /boot. Reinstalling kernel..."
     chroot /mnt/mt-live apt-get update
     chroot /mnt/mt-live apt-get install -y linux-image-686
 fi
 
+echo "Installing bootloader..."
+# Generate a proper fstab before GRUB setup
+BOOT_UUID=$(blkid -s UUID -o value "$P1")
+ROOT_UUID=$(blkid -s UUID -o value "$P2")
+PERSIST_UUID=$(blkid -s UUID -o value "$P3")
+
+cat > /mnt/mt-live/etc/fstab << FSTAB
+UUID=$ROOT_UUID / ext4 errors=remount-ro 0 1
+UUID=$BOOT_UUID /boot ext4 defaults 0 2
+FSTAB
+
+# Force i386-pc for older 32-bit BIOS systems
+chroot /mnt/mt-live grub-install --target=i386-pc --force "$DISK"
+# Create a manual grub.cfg if update-grub fails or produces live-only config
+KERNEL_FILE=$(basename $(ls /mnt/mt-live/boot/vmlinuz* | head -1))
+INITRD_FILE=$(basename $(ls /mnt/mt-live/boot/initrd.img* | head -1))
+
+cat > /mnt/mt-live/boot/grub/grub.cfg << GRUBCFG
+set default=0
+set timeout=5
+insmod all_video
+insmod gfxterm
+terminal_output gfxterm
+
+menuentry "MT-OS (Installed)" {
+    insmod ext2
+    search --no-floppy --fs-uuid --set=root $BOOT_UUID
+    linux /$KERNEL_FILE root=UUID=$ROOT_UUID quiet rw
+    initrd /$INITRD_FILE
+}
+GRUBCFG
+
 umount /mnt/mt-live/boot
-UUID=$(blkid -s UUID -o value "$P2")
-echo "UUID=$UUID / ext4 errors=remount-ro 0 1" > /mnt/mt-live/etc/fstab
-for d in boot sys proc dev/pts dev; do umount /mnt/mt-live/$d 2>/dev/null||true; done
+for d in sys proc dev/pts dev; do umount /mnt/mt-live/$d 2>/dev/null||true; done
 mount "$P3" /mnt/mt-persist
 echo "/ union" > /mnt/mt-persist/persistence.conf
 umount /mnt/mt-persist
