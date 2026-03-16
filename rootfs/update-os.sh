@@ -19,6 +19,11 @@ fi
 # 2. Sync files to the live system
 echo "Applying updates..."
 
+# Install missing dependencies (like feh)
+echo "Checking for missing dependencies..."
+sudo apt-get update -qq
+sudo apt-get install -y --no-install-recommends feh picom python3-pil 2>/dev/null
+
 # Update Apps
 if [ -d "$TEMP_DIR/rootfs/mt-os-apps" ]; then
     # Use -r to copy directories and avoid errors with __pycache__ if present
@@ -32,6 +37,7 @@ mkdir -p /home/ghost/.config/openbox
 [ -f $TEMP_DIR/rootfs/mt-os-config/menu.xml ] && sudo cp $TEMP_DIR/rootfs/mt-os-config/menu.xml /home/ghost/.config/openbox/
 [ -f $TEMP_DIR/rootfs/mt-os-config/.bashrc ] && sudo cp $TEMP_DIR/rootfs/mt-os-config/.bashrc /home/ghost/.bashrc
 [ -f $TEMP_DIR/rootfs/mt-os-config/set-wallpaper.sh ] && sudo cp $TEMP_DIR/rootfs/mt-os-config/set-wallpaper.sh /opt/mt-os/
+sudo chmod +x /home/ghost/.config/openbox/autostart /opt/mt-os/set-wallpaper.sh 2>/dev/null
 
 # Update Services
 if [ -d "$TEMP_DIR/rootfs/mt-os-services" ]; then
@@ -48,5 +54,11 @@ sudo ln -sf /opt/mt-os/update-os.sh /usr/local/bin/update-os
 sudo chmod +x /usr/local/bin/update-os
 sudo chown -R ghost:ghost /home/ghost /opt/mt-os
 
+# Reload Openbox to apply new rc.xml immediately
+echo "Reloading window manager..."
+DISPLAY=:0 openbox --reconfigure 2>/dev/null || true
+# Run wallpaper script immediately
+sudo -u ghost DISPLAY=:0 bash /opt/mt-os/set-wallpaper.sh 2>/dev/null || true
+
 echo "--- Update Complete! ---"
-echo "Please restart your session or reboot to see all changes."
+echo "Your desktop has been reloaded. If you still see issues, please reboot."
