@@ -33,6 +33,7 @@ apt-get install -y --no-install-recommends --fix-missing \
     iproute2 net-tools htop ca-certificates \
     portaudio19-dev python3-pyaudio \
     dunst libnotify-bin \
+    tzdata ntpdate \
     python3-pil zlib1g-dev libjpeg-dev || {
     echo "First attempt failed, retrying with --fix-missing..."
     sleep 10
@@ -51,8 +52,9 @@ apt-get install -y --no-install-recommends --fix-missing \
         iproute2 net-tools htop ca-certificates \
         portaudio19-dev python3-pyaudio \
         dunst libnotify-bin \
+        tzdata ntpdate \
         python3-pil zlib1g-dev libjpeg-dev
-}
+    }
 
 pip3 install --no-cache-dir requests speechrecognition pyttsx3
 
