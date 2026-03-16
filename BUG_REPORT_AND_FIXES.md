@@ -104,3 +104,43 @@
 - The Openbox window manager configuration is well-suited for this application and doesn't require changes
 - Consider adding explicit focus handling to ensure the terminal entry field receives focus when the window is activated
 
+
+---
+
+### 4. **Quaternary Issue: Installation Failure (Missing Kernel/Basename Error)**
+
+**Root Cause:**
+- In `mt-install.sh`, the check for the kernel file `[ ! -f /mnt/mt-live/boot/vmlinuz* ]` was unreliable because the wildcard `*` does not expand correctly inside the `[ ]` brackets if multiple files match or if no files match.
+- When the kernel was not found, the script attempted to reinstall it, but the subsequent `ls /mnt/mt-live/boot/vmlinuz*` still failed if the installation didn't place the file exactly where expected or if the shell globbing failed.
+- The command `basename $(ls /mnt/mt-live/boot/vmlinuz* | head -1)` failed with `basename: missing operand` because the `ls` command returned an error (no such file), resulting in an empty string being passed to `basename`.
+
+**Impact:**
+- The installation process would crash at line 110 (or 113/114 in the original script) during the GRUB configuration phase.
+- Users were unable to complete the persistent installation to a physical disk.
+
+**Fix Applied:**
+- Updated the kernel check to use a more robust `if ! ls /mnt/mt-live/boot/vmlinuz* >/dev/null 2>&1; then` pattern.
+- Added `--no-install-recommends` to the kernel installation to keep the image slim.
+- Refactored the kernel and initrd file detection to safely handle empty results and provide a clear error message instead of crashing.
+- Used `basename "$KERNEL_PATH"` with quotes to ensure the operand is never "missing" even if the path contains spaces (though unlikely for a kernel).
+
+---
+
+---
+
+### 5. **Quinary Issue: Installation Failure (Device or Resource Busy)**
+
+**Root Cause:**
+- In `mt-install.sh`, the `wipefs` and `parted` commands failed when the target disk had active partitions that were already mounted by the live system.
+- The error `Error: Partition(s) on /dev/sda are being used` occurred because the installer did not explicitly unmount existing partitions before attempting to re-partition the disk.
+
+**Impact:**
+- The installation process would crash at line 59 during the partitioning phase.
+- Users could not install MT-OS if the target disk was previously formatted and automatically mounted.
+
+**Fix Applied:**
+- Added a robust unmounting loop before the partitioning phase.
+- The script now uses `lsblk` to identify all partitions on the target disk and attempts to unmount them using `umount -l` (lazy unmount) to ensure the disk is free for `wipefs` and `parted`.
+- This ensures that even if the live system has auto-mounted a partition, the installer can safely proceed.
+
+---

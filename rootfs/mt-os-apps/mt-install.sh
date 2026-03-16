@@ -53,6 +53,17 @@ if [ "$CONFIRM_UPPER" != "YES" ]; then
 fi
 
 echo "Clearing existing partitions..."
+# Unmount any existing partitions on the target disk to prevent "Device or resource busy" errors
+echo "Unmounting any active partitions on $DISK..."
+for part in $(lsblk -ln -o NAME "$DISK" | tail -n +2); do
+    # Handle both /dev/sda1 and /dev/nvme0n1p1 styles
+    PART_PATH="/dev/$part"
+    if mountpoint -q "$PART_PATH" || grep -q "$PART_PATH" /proc/mounts; then
+        echo "Unmounting $PART_PATH..."
+        umount -l "$PART_PATH" || true
+    fi
+done
+
 # Wipe any existing filesystem signatures to prevent parted from hanging or failing
 wipefs -a "$DISK" || true
 
@@ -90,10 +101,12 @@ for d in dev dev/pts proc sys; do mount --bind /$d /mnt/mt-live/$d; done
 mount "$P1" /mnt/mt-live/boot || { echo "Failed to mount $P1 to /boot"; exit 1; }
 
 # Ensure the kernel is present in the new system BEFORE installing GRUB
-if [ ! -f /mnt/mt-live/boot/vmlinuz* ]; then
+# Use a more robust check for the kernel file
+if ! ls /mnt/mt-live/boot/vmlinuz* >/dev/null 2>&1; then
     echo "Warning: No kernel found in /boot. Reinstalling kernel..."
+    # Ensure /dev, /proc, /sys are mounted for apt-get (already done above, but good to be sure)
     chroot /mnt/mt-live apt-get update
-    chroot /mnt/mt-live apt-get install -y linux-image-686
+    chroot /mnt/mt-live apt-get install -y --no-install-recommends linux-image-686
 fi
 
 echo "Installing bootloader..."
@@ -110,8 +123,17 @@ FSTAB
 # Force i386-pc for older 32-bit BIOS systems
 chroot /mnt/mt-live grub-install --target=i386-pc --force "$DISK"
 # Create a manual grub.cfg if update-grub fails or produces live-only config
-KERNEL_FILE=$(basename $(ls /mnt/mt-live/boot/vmlinuz* | head -1))
-INITRD_FILE=$(basename $(ls /mnt/mt-live/boot/initrd.img* | head -1))
+# Use a more robust way to find kernel and initrd files
+KERNEL_PATH=$(ls /mnt/mt-live/boot/vmlinuz* 2>/dev/null | head -n 1)
+INITRD_PATH=$(ls /mnt/mt-live/boot/initrd.img* 2>/dev/null | head -n 1)
+
+if [ -z "$KERNEL_PATH" ] || [ -z "$INITRD_PATH" ]; then
+    echo "Error: Kernel or Initrd not found in /boot after installation."
+    exit 1
+fi
+
+KERNEL_FILE=$(basename "$KERNEL_PATH")
+INITRD_FILE=$(basename "$INITRD_PATH")
 
 cat > /mnt/mt-live/boot/grub/grub.cfg << GRUBCFG
 set default=0
