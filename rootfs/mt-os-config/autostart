@@ -5,7 +5,7 @@ sudo ntpdate -u pool.ntp.org &
 picom &
 conky &
 lxpanel --profile mt-os &
-sleep 2 && python3 /opt/mt-os/mt-face.py &
+# mt-face.py is started by mt-ai-daemon.service
 sleep 3 && python3 /opt/mt-os/mt-terminal.py &
 pulseaudio --start &
 dunst &

@@ -52,10 +52,13 @@ fi
 sudo mkdir -p /etc/mt-os
 echo "$REMOTE_HASH" | sudo tee /etc/mt-os/version > /dev/null
 
-# Ensure systemd services are enabled and reloaded
+# Ensure systemd services are enabled, reloaded, and restarted
 if [ -d "/etc/systemd/system" ]; then
     sudo systemctl daemon-reload
     sudo systemctl enable mt-ai-daemon.service 2>/dev/null || true
+    # Stop any existing instances before restarting service
+    sudo pkill -f mt-face.py || true
+    sudo systemctl restart mt-ai-daemon.service 2>/dev/null || true
 fi
 
 # 3. Cleanup
