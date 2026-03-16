@@ -99,9 +99,13 @@ echo "{}" > /etc/mt-os/ghost-commands.json
 chmod 666 /etc/mt-os/ghost-commands.json
 
 # Install update tools
-# Check both /rootfs and local rootfs directory
+# Robustly find the rootfs directory relative to the script
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 ROOTFS_DIR="/rootfs"
-[ ! -d "$ROOTFS_DIR" ] && ROOTFS_DIR="./rootfs"
+[ ! -d "$ROOTFS_DIR" ] && ROOTFS_DIR="$SCRIPT_DIR/rootfs"
+[ ! -d "$ROOTFS_DIR" ] && ROOTFS_DIR="$SCRIPT_DIR" # If script is inside rootfs
+
+echo "Using rootfs directory: $ROOTFS_DIR"
 
 test -f "$ROOTFS_DIR/update-checker.sh" && cp "$ROOTFS_DIR/update-checker.sh" /opt/mt-os/
 chmod +x /opt/mt-os/update-checker.sh 2>/dev/null || true
@@ -109,7 +113,7 @@ chmod +x /opt/mt-os/update-checker.sh 2>/dev/null || true
 test -f "$ROOTFS_DIR/update-os.sh" && cp "$ROOTFS_DIR/update-os.sh" /usr/local/bin/update-os
 chmod +x /usr/local/bin/update-os 2>/dev/null || true
 # Ensure update-os is also in /opt/mt-os for consistency
-cp "$ROOTFS_DIR/update-os.sh" /opt/mt-os/update-os.sh
-chmod +x /opt/mt-os/update-os.sh
+test -f "$ROOTFS_DIR/update-os.sh" && cp "$ROOTFS_DIR/update-os.sh" /opt/mt-os/update-os.sh
+chmod +x /opt/mt-os/update-os.sh 2>/dev/null || true
 
 echo "Setup complete."
