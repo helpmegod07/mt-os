@@ -49,8 +49,9 @@ LGDM
 
 # Copy apps and services
 mkdir -p /opt/mt-os /etc/mt-os
-for f in /mt-os-apps/*; do test -f "$f" && cp "$f" "/opt/mt-os/"; done
-chmod +x /opt/mt-os/*.sh 2>/dev/null || true
+# Use -r to copy everything and ensure scripts are executable
+cp -rf /rootfs/mt-os-apps/* /opt/mt-os/
+chmod +x /opt/mt-os/*.sh /opt/mt-os/*.py 2>/dev/null || true
 
 for f in /mt-os-services/*.service; do test -f "$f" && cp "$f" "/etc/systemd/system/"; done
 systemctl enable mt-ai-daemon.service 2>/dev/null || true
@@ -75,5 +76,8 @@ chmod +x /opt/mt-os/update-checker.sh 2>/dev/null || true
 
 test -f /rootfs/update-os.sh && cp /rootfs/update-os.sh /usr/local/bin/update-os
 chmod +x /usr/local/bin/update-os 2>/dev/null || true
+# Ensure update-os is also in /opt/mt-os for consistency
+cp /rootfs/update-os.sh /opt/mt-os/update-os.sh
+chmod +x /opt/mt-os/update-os.sh
 
 echo "Setup complete."

@@ -41,8 +41,9 @@ fi
 
 # 3. Cleanup
 rm -rf $TEMP_DIR
-sudo chmod +x /opt/mt-os/*.sh 2>/dev/null
-sudo chown -R ghost:ghost /home/ghost
+# Ensure all scripts and python files are executable
+sudo chmod +x /opt/mt-os/*.sh /opt/mt-os/*.py /usr/local/bin/update-os 2>/dev/null
+sudo chown -R ghost:ghost /home/ghost /opt/mt-os
 
 echo "--- Update Complete! ---"
 echo "Please restart your session or reboot to see all changes."
