@@ -66,6 +66,17 @@ export CC=i686-linux-gnu-gcc
 export CXX=i686-linux-gnu-g++
 pip3 install --no-cache-dir requests speechrecognition pyttsx3 psutil
 
+# Timezone and NTP setup
+ln -sf /usr/share/zoneinfo/UTC /etc/localtime
+echo "UTC" > /etc/timezone
+
+# Ensure ntpdate runs on boot if network is available
+cat > /etc/network/if-up.d/ntpdate << 'NTP'
+#!/bin/sh
+/usr/sbin/ntpdate -u pool.ntp.org || true
+NTP
+chmod +x /etc/network/if-up.d/ntpdate
+
 # User setup
 useradd -m -s /bin/bash -G sudo,audio,video,input ghost 2>/dev/null || true
 echo "ghost:ghost" | chpasswd

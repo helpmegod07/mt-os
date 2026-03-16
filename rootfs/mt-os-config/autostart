@@ -1,4 +1,6 @@
 #!/bin/bash
+# Sync time on startup
+sudo ntpdate -u pool.ntp.org &
 /opt/mt-os/set-wallpaper.sh &
 picom &
 conky &
