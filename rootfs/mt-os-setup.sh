@@ -35,7 +35,7 @@ apt-get install -y --no-install-recommends --fix-missing \
     dunst libnotify-bin \
     tzdata ntpdate \
     build-essential python3-dev \
-    gcc-i686-linux-gnu g++-i686-linux-gnu libc6-dev-i386 \
+    gcc-i686-linux-gnu g++-i686-linux-gnu \
     python3-pil zlib1g-dev libjpeg-dev || {
     echo "First attempt failed, retrying with --fix-missing..."
     sleep 10
@@ -56,7 +56,7 @@ apt-get install -y --no-install-recommends --fix-missing \
         dunst libnotify-bin \
         tzdata ntpdate \
         build-essential python3-dev \
-        gcc-i686-linux-gnu g++-i686-linux-gnu libc6-dev-i386 \
+        gcc-i686-linux-gnu g++-i686-linux-gnu \
         python3-pil zlib1g-dev libjpeg-dev
     }
 
