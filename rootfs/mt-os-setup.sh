@@ -117,7 +117,75 @@ if [ -d "$CONFIG_DIR" ]; then
     test -f "$CONFIG_DIR/autostart" && cp "$CONFIG_DIR/autostart" /home/ghost/.config/openbox/
     test -f "$CONFIG_DIR/rc.xml" && cp "$CONFIG_DIR/rc.xml" /home/ghost/.config/openbox/
     test -f "$CONFIG_DIR/menu.xml" && cp "$CONFIG_DIR/menu.xml" /home/ghost/.config/openbox/
-    test -f "$CONFIG_DIR/themerc" && cp "$CONFIG_DIR/themerc" /home/ghost/.config/openbox/themerc
+    # lxpanel config
+    mkdir -p /home/ghost/.config/lxpanel/mt-os/panels
+    cat > /home/ghost/.config/lxpanel/mt-os/panels/panel << 'PANEL'
+Global {
+    edge=bottom
+    allign=left
+    margin=0
+    widthtype=percent
+    width=100
+    height=24
+    transparent=0
+    tintcolor=#0A0A0F
+    alpha=255
+    autohide=0
+    heightwhenhidden=2
+    setdocktype=1
+    setpartialstrut=1
+    usefontcolor=1
+    fontcolor=#00FF88
+    background=1
+    bgfile=/opt/mt-os/panel-bg.png
+}
+
+Plugin {
+    type = menu
+    Config {
+        image=/opt/mt-os/ghost-icon.png
+        system {
+        }
+        separator {
+        }
+        item {
+            command=run
+        }
+    }
+}
+
+Plugin {
+    type = taskbar
+    Config {
+        tooltips=1
+        IconsOnly=0
+        AcceptSkipPager=1
+        ShowAllDesks=0
+        UseCustomButton=1
+        MaxButtonWidth=150
+        FlatButton=1
+    }
+}
+
+Plugin {
+    type = pager
+}
+
+Plugin {
+    type = dclock
+    Config {
+        ClockFmt=%R
+        TooltipFmt=%A %x
+        BoldFont=1
+        IconOnly=0
+        CenterText=0
+    }
+}
+PANEL
+    if [ -f "$CONFIG_DIR/themerc" ]; then
+        mkdir -p /home/ghost/.themes/MT-OS/openbox-3
+        cp "$CONFIG_DIR/themerc" /home/ghost/.themes/MT-OS/openbox-3/themerc
+    fi
     test -f "$CONFIG_DIR/set-wallpaper.sh" && cp "$CONFIG_DIR/set-wallpaper.sh" /opt/mt-os/
 fi
 chmod +x /home/ghost/.config/openbox/autostart 2>/dev/null || true
