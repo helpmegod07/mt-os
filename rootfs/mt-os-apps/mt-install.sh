@@ -43,12 +43,15 @@ if [ ${#MISSING_TOOLS[@]} -ne 0 ]; then
     sudo dpkg --configure -a
     
     echo "Updating package lists and installing missing tools..."
-    sudo apt-get update
-    if sudo apt-get install -y parted rsync e2fsprogs util-linux; then
+    # Use -qq for quieter output and --allow-releaseinfo-change for robustness
+    sudo apt-get update -qq --allow-releaseinfo-change || true
+    
+    if sudo apt-get install -y -qq --no-install-recommends parted rsync e2fsprogs util-linux; then
         echo "Successfully installed missing tools."
     else
         echo "Error: Failed to install missing tools automatically."
-        echo "Please run: sudo apt-get update && sudo apt-get install -y parted rsync e2fsprogs util-linux"
+        echo "Please ensure you have an internet connection and run: sudo apt-get update && sudo apt-get install -y parted rsync e2fsprogs util-linux"
+        # Don't exit immediately, let the user see the error
         read -p "Press Enter to exit..."
         exit 1
     fi
@@ -88,32 +91,32 @@ for part in $(lsblk -ln -o NAME "$DISK" 2>/dev/null | tail -n +2); do
     PART_PATH="/dev/$part"
     if mountpoint -q "$PART_PATH" 2>/dev/null || grep -q "$PART_PATH" /proc/mounts 2>/dev/null; then
         echo "Unmounting $PART_PATH..."
-        umount -l "$PART_PATH" || true
+        sudo umount -l "$PART_PATH" || true
     fi
 done
 
 # Wipe any existing filesystem signatures to prevent parted from hanging or failing
 echo "Wiping existing filesystems..."
-wipefs -a "$DISK" || true
+sudo wipefs -a "$DISK" || true
 
 echo ""
 echo "=========================================="
 echo "Step 2: Creating partitions..."
 echo "=========================================="
 echo "Creating partition table (MBR)..."
-parted -s "$DISK" mklabel msdos
+sudo parted -s "$DISK" mklabel msdos
 
 echo "Creating boot partition (512 MB)..."
-parted -s "$DISK" mkpart primary ext4 1MiB 512MiB
+sudo parted -s "$DISK" mkpart primary ext4 1MiB 512MiB
 
 echo "Creating root partition (5 GB)..."
-parted -s "$DISK" mkpart primary ext4 512MiB 5000MiB
+sudo parted -s "$DISK" mkpart primary ext4 512MiB 5000MiB
 
 echo "Creating persistence partition (remaining space)..."
-parted -s "$DISK" mkpart primary ext4 5000MiB 100%
+sudo parted -s "$DISK" mkpart primary ext4 5000MiB 100%
 
 echo "Setting boot flag..."
-parted -s "$DISK" set 1 boot on
+sudo parted -s "$DISK" set 1 boot on
 
 # Wait for partitions to be recognized
 sleep 2
@@ -130,13 +133,13 @@ echo "=========================================="
 echo "Step 3: Formatting partitions..."
 echo "=========================================="
 echo "Formatting boot partition..."
-mkfs.ext4 -F -L boot "$P1" || { echo "Failed to format $P1"; exit 1; }
+sudo mkfs.ext4 -F -L boot "$P1" || { echo "Failed to format $P1"; exit 1; }
 
 echo "Formatting root partition..."
-mkfs.ext4 -F -L MT-OS "$P2" || { echo "Failed to format $P2"; exit 1; }
+sudo mkfs.ext4 -F -L MT-OS "$P2" || { echo "Failed to format $P2"; exit 1; }
 
 echo "Formatting persistence partition..."
-mkfs.ext4 -F -L persistence "$P3" || { echo "Failed to format $P3"; exit 1; }
+sudo mkfs.ext4 -F -L persistence "$P3" || { echo "Failed to format $P3"; exit 1; }
 
 echo ""
 echo "=========================================="
@@ -178,8 +181,8 @@ echo "=========================================="
 # Ensure the kernel is present in the new system BEFORE installing GRUB
 if ! ls /mnt/mt-live/boot/vmlinuz* >/dev/null 2>&1; then
     echo "Warning: No kernel found in /boot. Installing kernel..."
-    sudo chroot /mnt/mt-live apt-get update -qq
-    sudo chroot /mnt/mt-live apt-get install -y --no-install-recommends linux-image-686 || true
+    sudo chroot /mnt/mt-live apt-get update -qq --allow-releaseinfo-change || true
+    sudo chroot /mnt/mt-live apt-get install -y -qq --no-install-recommends linux-image-686 || true
 fi
 
 # Generate a proper fstab before GRUB setup
