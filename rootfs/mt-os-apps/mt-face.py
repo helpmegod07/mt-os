@@ -10,7 +10,7 @@ FACE_PORT=59999
 class Face:
     def __init__(self):
         self.root=tk.Tk(); self.root.title("Ghost"); self.root.geometry("300x320+20+20")
-        self.root.configure(bg=BG); self.root.wm_attributes("-topmost",True); self.root.wm_attributes("-alpha",0.93)
+        self.root.configure(bg=BG); self.root.wm_attributes("-alpha",0.93)
         self.blink=1.0; self.talking=False; self.emotion="idle"; self.mp=0.0; self.q=queue.Queue()
         self._ui(); self._anim(); self._voice(); self._start_socket()
     def _ui(self):

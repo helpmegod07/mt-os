@@ -26,11 +26,11 @@ fi
 
 # Update Configs
 mkdir -p /home/ghost/.config/openbox
-[ -f $TEMP_DIR/rootfs/mt-os-config/autostart ]: # "&& sudo cp $TEMP_DIR/rootfs/mt-os-config/autostart /home/ghost/.config/openbox/"
-[ -f $TEMP_DIR/rootfs/mt-os-config/rc.xml ]: # "&& sudo cp $TEMP_DIR/rootfs/mt-os-config/rc.xml /home/ghost/.config/openbox/"
-[ -f $TEMP_DIR/rootfs/mt-os-config/menu.xml ]: # "&& sudo cp $TEMP_DIR/rootfs/mt-os-config/menu.xml /home/ghost/.config/openbox/"
-[ -f $TEMP_DIR/rootfs/mt-os-config/.bashrc ]: # "&& sudo cp $TEMP_DIR/rootfs/mt-os-config/.bashrc /home/ghost/.bashrc"
-[ -f $TEMP_DIR/rootfs/mt-os-config/set-wallpaper.sh ]: # "&& sudo cp $TEMP_DIR/rootfs/mt-os-config/set-wallpaper.sh /opt/mt-os/"
+[ -f $TEMP_DIR/rootfs/mt-os-config/autostart ] && sudo cp $TEMP_DIR/rootfs/mt-os-config/autostart /home/ghost/.config/openbox/
+[ -f $TEMP_DIR/rootfs/mt-os-config/rc.xml ] && sudo cp $TEMP_DIR/rootfs/mt-os-config/rc.xml /home/ghost/.config/openbox/
+[ -f $TEMP_DIR/rootfs/mt-os-config/menu.xml ] && sudo cp $TEMP_DIR/rootfs/mt-os-config/menu.xml /home/ghost/.config/openbox/
+[ -f $TEMP_DIR/rootfs/mt-os-config/.bashrc ] && sudo cp $TEMP_DIR/rootfs/mt-os-config/.bashrc /home/ghost/.bashrc
+[ -f $TEMP_DIR/rootfs/mt-os-config/set-wallpaper.sh ] && sudo cp $TEMP_DIR/rootfs/mt-os-config/set-wallpaper.sh /opt/mt-os/
 
 # Update Services
 if [ -d "$TEMP_DIR/rootfs/mt-os-services" ]; then

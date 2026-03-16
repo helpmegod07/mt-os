@@ -23,7 +23,7 @@ def check_typo(cmd):
 class Term:
     def __init__(self):
         self.root=tk.Tk(); self.root.title("Ghost Terminal"); self.root.geometry("380x240+900+540")
-        self.root.configure(bg=BG); self.root.wm_attributes("-topmost",True); self.root.wm_attributes("-alpha",0.93)
+        self.root.configure(bg=BG); self.root.wm_attributes("-alpha",0.93)
         self.cwd=os.path.expanduser("~"); self.hist=[]; self.hi=0; self.q=queue.Queue(); self._last_fix=None
         self._ui(); self._pq()
     def _ui(self):
