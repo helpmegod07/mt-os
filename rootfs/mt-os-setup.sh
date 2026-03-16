@@ -21,6 +21,8 @@ apt-get install -y --no-install-recommends \
   x11-xserver-utils arandr wget curl git \
   iproute2 net-tools htop ca-certificates \
   portaudio19-dev python3-pyaudio \
+  apt-get install -y --no-install-recommends \
+  dunst libnotify-bin \
   python3-pil zlib1g-dev libjpeg-dev
 pip3 install --no-cache-dir anthropic speechrecognition pyttsx3 requests
 useradd -m -s /bin/bash -G sudo,audio,video,input ghost 2>/dev/null || true
@@ -50,10 +52,10 @@ echo "{}" > /etc/mt-os/ghost-commands.json
 chmod 666 /etc/mt-os/ghost-commands.json
 # ... (existing code above)
 
-# Install the update command
-# This copies the script you created to a global folder so you can run it anywhere
+# Install the update checker
+sudo cp /rootfs/update-checker.sh /opt/mt-os/
+sudo chmod +x /opt/mt-os/update-checker.sh
+
+# The update-os command we made earlier
 sudo cp /rootfs/update-os.sh /usr/local/bin/update-os
 sudo chmod +x /usr/local/bin/update-os
-
-echo "Setup complete."
-
