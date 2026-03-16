@@ -21,7 +21,8 @@ echo "Applying updates..."
 
 # Update Apps
 if [ -d "$TEMP_DIR/rootfs/mt-os-apps" ]; then
-    sudo cp -r $TEMP_DIR/rootfs/mt-os-apps/* /opt/mt-os/ 2>/dev/null
+    # Use -r to copy directories and avoid errors with __pycache__ if present
+    sudo cp -rf $TEMP_DIR/rootfs/mt-os-apps/* /opt/mt-os/ 2>/dev/null
 fi
 
 # Update Configs
