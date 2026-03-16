@@ -2,7 +2,7 @@
 import tkinter as tk
 from tkinter import scrolledtext
 import subprocess,threading,os,queue,json,socket,re
-try: import anthropic; AI=True; CLIENT=anthropic.Anthropic(api_key=os.environ.get("ANTHROPIC_API_KEY",""))
+try: import requests; AI=True; GITHUB_MODELS_ENDPOINT="https://models.github.ai/inference/chat/completions"
 except: AI=False
 NG="#00FF88"; NP="#FF00CC"; NB="#00CCFF"; BG="#030308"; TC="#AAFFCC"
 FACE_PORT=59999
@@ -78,23 +78,49 @@ class Term:
         except subprocess.TimeoutExpired: self.q.put(("p","Timeout\n","error"))
         except Exception as e: self.q.put(("p",f"Failed: {e}\n","error"))
     def _explain(self,cmd,err):
-        if not AI: return
+        if not AI or not os.environ.get("GITHUB_PAT"): return
         def go():
             try:
-                r=CLIENT.messages.create(model="claude-sonnet-4-20250514",max_tokens=120,system=SYS,
-                    messages=[{"role":"user","content":f"Command: {cmd}\nError: {err}"}])
-                text=r.content[0].text
+                headers = {
+                    "Authorization": f"Bearer {os.environ.get("GITHUB_PAT")}",
+                    "Content-Type": "application/json",
+                    "X-GitHub-Api-Version": "2026-03-10"
+                }
+                data = {
+                    "model": "openai/gpt-4o-mini", # Using a free model from GitHub Models
+                    "messages": [
+                        {"role": "system", "content": SYS},
+                        {"role": "user", "content": f"Command: {cmd}\nError: {err}"}
+                    ],
+                    "max_tokens": 120
+                }
+                response = requests.post(GITHUB_MODELS_ENDPOINT, headers=headers, json=data)
+                response.raise_for_status()
+                text = response.json()["choices"][0]["message"]["content"]
                 self.q.put(("p",f"🤖 {text}\n","ai"))
                 speak_to_face(text)
-            except: pass
+            except Exception as e: self.q.put(("p",f"AI error: {e}\n","error"))
         threading.Thread(target=go,daemon=True).start()
     def _ask(self,question):
-        if not AI: self._p("AI unavailable\n","error"); return
+        if not AI or not os.environ.get("GITHUB_PAT"): self._p("AI unavailable. Set GITHUB_PAT to activate.\n","error"); return
         def go():
             try:
-                r=CLIENT.messages.create(model="claude-sonnet-4-20250514",max_tokens=150,system=SYS,
-                    messages=[{"role":"user","content":question}])
-                text=r.content[0].text
+                headers = {
+                    "Authorization": f"Bearer {os.environ.get("GITHUB_PAT")}",
+                    "Content-Type": "application/json",
+                    "X-GitHub-Api-Version": "2026-03-10"
+                }
+                data = {
+                    "model": "openai/gpt-4o-mini", # Using a free model from GitHub Models
+                    "messages": [
+                        {"role": "system", "content": SYS},
+                        {"role": "user", "content": question}
+                    ],
+                    "max_tokens": 150
+                }
+                response = requests.post(GITHUB_MODELS_ENDPOINT, headers=headers, json=data)
+                response.raise_for_status()
+                text = response.json()["choices"][0]["message"]["content"]
                 self.q.put(("p",f"🤖 {text}\n","ai"))
                 speak_to_face(text)
             except Exception as e: self.q.put(("p",f"AI error: {e}\n","error"))
