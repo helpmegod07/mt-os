@@ -50,12 +50,13 @@ chmod +x /opt/mt-os/set-wallpaper.sh 2>/dev/null || true
 chown -R ghost:ghost /home/ghost
 echo "{}" > /etc/mt-os/ghost-commands.json
 chmod 666 /etc/mt-os/ghost-commands.json
-# ... (existing code above)
-
 # Install the update checker
 sudo cp /rootfs/update-checker.sh /opt/mt-os/
 sudo chmod +x /opt/mt-os/update-checker.sh
 
-# The update-os command we made earlier
+# The update-os command
 sudo cp /rootfs/update-os.sh /usr/local/bin/update-os
 sudo chmod +x /usr/local/bin/update-os
+
+echo "Setup complete."
+
