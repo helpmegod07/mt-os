@@ -32,7 +32,7 @@ if [ ${#MISSING_TOOLS[@]} -ne 0 ]; then
     echo "The following required tools are missing: ${MISSING_TOOLS[*]}"
     echo "Attempting to resolve automatically..."
     
-    # Step 1: Resolve apt-get Permission Errors (from Troubleshooting Guide)
+    # Step 1: Resolve apt-get Permission Errors
     echo "Cleaning up package manager locks..."
     sudo rm -f /var/lib/apt/lists/lock
     sudo rm -f /var/cache/apt/archives/lock
@@ -43,7 +43,6 @@ if [ ${#MISSING_TOOLS[@]} -ne 0 ]; then
     sudo dpkg --configure -a
     
     echo "Updating package lists and installing missing tools..."
-    # Use -qq for quieter output and --allow-releaseinfo-change for robustness
     sudo apt-get update -qq --allow-releaseinfo-change || true
     
     if sudo apt-get install -y -qq --no-install-recommends parted rsync e2fsprogs util-linux; then
@@ -51,7 +50,6 @@ if [ ${#MISSING_TOOLS[@]} -ne 0 ]; then
     else
         echo "Error: Failed to install missing tools automatically."
         echo "Please ensure you have an internet connection and run: sudo apt-get update && sudo apt-get install -y parted rsync e2fsprogs util-linux"
-        # Don't exit immediately, let the user see the error
         read -p "Press Enter to exit..."
         exit 1
     fi
@@ -72,7 +70,6 @@ fi
 echo ""
 echo "WARNING: This will ERASE all data on $DISK"
 read -p "ERASE $DISK? Type YES to confirm: " CONFIRM
-# Make confirmation case-insensitive
 CONFIRM_UPPER=$(echo "$CONFIRM" | tr '[:lower:]' '[:upper:]')
 if [ "$CONFIRM_UPPER" != "YES" ]; then
     echo "Aborted by user."
@@ -84,10 +81,8 @@ echo ""
 echo "=========================================="
 echo "Step 1: Clearing existing partitions..."
 echo "=========================================="
-# Unmount any existing partitions on the target disk to prevent "Device or resource busy" errors
 echo "Unmounting any active partitions on $DISK..."
 for part in $(lsblk -ln -o NAME "$DISK" 2>/dev/null | tail -n +2); do
-    # Handle both /dev/sda1 and /dev/nvme0n1p1 styles
     PART_PATH="/dev/$part"
     if mountpoint -q "$PART_PATH" 2>/dev/null || grep -q "$PART_PATH" /proc/mounts 2>/dev/null; then
         echo "Unmounting $PART_PATH..."
@@ -95,7 +90,6 @@ for part in $(lsblk -ln -o NAME "$DISK" 2>/dev/null | tail -n +2); do
     fi
 done
 
-# Wipe any existing filesystem signatures to prevent parted from hanging or failing
 echo "Wiping existing filesystems..."
 sudo wipefs -a "$DISK" || true
 
@@ -133,26 +127,24 @@ echo "=========================================="
 echo "Step 3: Formatting partitions..."
 echo "=========================================="
 echo "Formatting boot partition..."
-sudo mkfs.ext4 -F -L boot "$P1" || { echo "Failed to format $P1"; exit 1; }
+sudo mkfs.ext4 -F -L boot "$P1"
 
 echo "Formatting root partition..."
-sudo mkfs.ext4 -F -L MT-OS "$P2" || { echo "Failed to format $P2"; exit 1; }
+sudo mkfs.ext4 -F -L MT-OS "$P2"
 
 echo "Formatting persistence partition..."
-sudo mkfs.ext4 -F -L persistence "$P3" || { echo "Failed to format $P3"; exit 1; }
+sudo mkfs.ext4 -F -L persistence "$P3"
 
 echo ""
 echo "=========================================="
 echo "Step 4: Mounting and copying system files..."
 echo "=========================================="
-# Ensure mount points exist and are clean
 sudo mkdir -p /mnt/mt-live /mnt/mt-persist
-# Unmount if already mounted from a previous failed attempt
 sudo umount -l /mnt/mt-live 2>/dev/null || true
 sudo umount -l /mnt/mt-persist 2>/dev/null || true
 
 echo "Mounting root partition..."
-sudo mount "$P2" /mnt/mt-live || { echo "Failed to mount $P2 to /mnt/mt-live"; exit 1; }
+sudo mount "$P2" /mnt/mt-live
 
 echo "Copying system files (this may take 5-15 minutes)..."
 sudo rsync -ax --progress \
@@ -171,21 +163,21 @@ echo "Mounting virtual filesystems..."
 for d in dev dev/pts proc sys; do sudo mount --bind /$d /mnt/mt-live/$d; done
 
 echo "Mounting boot partition..."
-sudo mount "$P1" /mnt/mt-live/boot || { echo "Failed to mount $P1 to /boot"; exit 1; }
+sudo mount "$P1" /mnt/mt-live/boot
 
 echo ""
 echo "=========================================="
 echo "Step 5: Installing bootloader and kernel..."
 echo "=========================================="
 
-# Ensure the kernel is present in the new system BEFORE installing GRUB
+# Ensure the kernel is present
 if ! ls /mnt/mt-live/boot/vmlinuz* >/dev/null 2>&1; then
     echo "Warning: No kernel found in /boot. Installing kernel..."
     sudo chroot /mnt/mt-live apt-get update -qq --allow-releaseinfo-change || true
     sudo chroot /mnt/mt-live apt-get install -y -qq --no-install-recommends linux-image-686 || true
 fi
 
-# Generate a proper fstab before GRUB setup
+# Generate a proper fstab
 echo "Generating fstab..."
 BOOT_UUID=$(blkid -s UUID -o value "$P1")
 ROOT_UUID=$(blkid -s UUID -o value "$P2")
@@ -199,10 +191,10 @@ UUID=$PERSIST_UUID /persistence ext4 defaults 0 2
 FSTAB
 
 echo "Installing GRUB bootloader..."
-# Force i386-pc for older 32-bit BIOS systems
-sudo chroot /mnt/mt-live grub-install --target=i386-pc --force "$DISK" 2>&1 || echo "Warning: GRUB installation had issues, but continuing..."
+# Install GRUB to the MBR of the disk
+sudo chroot /mnt/mt-live grub-install --target=i386-pc --force "$DISK"
 
-# Create a manual grub.cfg if update-grub fails or produces live-only config
+# Create a manual grub.cfg that is robust
 echo "Configuring GRUB..."
 KERNEL_PATH=$(ls /mnt/mt-live/boot/vmlinuz* 2>/dev/null | head -n 1)
 INITRD_PATH=$(ls /mnt/mt-live/boot/initrd.img* 2>/dev/null | head -n 1)
@@ -215,6 +207,8 @@ fi
 KERNEL_FILE=$(basename "$KERNEL_PATH")
 INITRD_FILE=$(basename "$INITRD_PATH")
 
+# IMPORTANT: Since /boot is a separate partition, the paths in grub.cfg 
+# should be relative to the root of the boot partition (i.e., /vmlinuz, not /boot/vmlinuz)
 sudo tee /mnt/mt-live/boot/grub/grub.cfg << GRUBCFG
 set default=0
 set timeout=5
@@ -235,13 +229,6 @@ menuentry "MT-OS Safe Mode" {
     linux /$KERNEL_FILE root=UUID=$ROOT_UUID nomodeset noapic nosplash
     initrd /$INITRD_FILE
 }
-
-menuentry "MT-OS 800x600 (Very Old Hardware)" {
-    insmod ext2
-    search --no-floppy --fs-uuid --set=root $BOOT_UUID
-    linux /$KERNEL_FILE root=UUID=$ROOT_UUID vga=771 nomodeset
-    initrd /$INITRD_FILE
-}
 GRUBCFG
 
 echo ""
@@ -257,7 +244,7 @@ sudo sed -i 's/^127.0.1.1.*/127.0.1.1 mt-os/' /mnt/mt-live/etc/hosts || echo "12
 echo "UTC" | sudo tee /mnt/mt-live/etc/timezone
 sudo ln -sf /usr/share/zoneinfo/UTC /mnt/mt-live/etc/localtime
 
-# Ensure ghost user exists and has proper permissions
+# Ensure ghost user exists
 sudo chroot /mnt/mt-live useradd -m -s /bin/bash -G sudo,audio,video,input ghost 2>/dev/null || true
 echo "ghost:ghost" | sudo chroot /mnt/mt-live chpasswd
 echo "ghost ALL=(ALL) NOPASSWD:ALL" | sudo tee -a /mnt/mt-live/etc/sudoers || true
@@ -270,14 +257,6 @@ autologin-user=ghost
 autologin-user-timeout=0
 user-session=openbox
 LIGHTDM
-
-# Ensure MT-OS directories exist
-sudo mkdir -p /mnt/mt-live/opt/mt-os
-sudo mkdir -p /mnt/mt-live/etc/mt-os
-
-# Create empty ghost commands file
-echo "{}" | sudo tee /mnt/mt-live/etc/mt-os/ghost-commands.json
-sudo chmod 666 /mnt/mt-live/etc/mt-os/ghost-commands.json
 
 echo ""
 echo "=========================================="
@@ -307,24 +286,6 @@ echo "✓ Installation Complete!"
 echo "=========================================="
 echo ""
 echo "MT-OS has been successfully installed to $DISK"
-echo ""
-echo "Installation Summary:"
-echo "  Boot Partition:       $P1 (512 MB)"
-echo "  Root Partition:       $P2 (5 GB)"
-echo "  Persistence Partition: $P3 (remaining)"
-echo ""
-echo "Next steps:"
-echo "  1. Remove your installation media (USB/CD)"
-echo "  2. Reboot your laptop"
-echo "  3. Select 'MT-OS (Installed)' from the boot menu"
-echo "  4. Login with username: ghost, password: ghost"
-echo ""
-echo "To set up GitHub AI features:"
-echo "  1. Run: mt-apikey"
-echo "  2. Paste your GitHub Personal Access Token (PAT)"
-echo ""
-echo "To connect to Wi-Fi:"
-echo "  1. Run: mt-wifi"
-echo ""
+echo "Please remove your installation media and reboot."
 echo "=========================================="
 read -p "Press Enter to exit..."
