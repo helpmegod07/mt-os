@@ -50,7 +50,12 @@ LGDM
 # Copy apps and services
 mkdir -p /opt/mt-os /etc/mt-os
 # Use -r to copy everything and ensure scripts are executable
-cp -rf /rootfs/mt-os-apps/* /opt/mt-os/
+# Check both /rootfs and local rootfs directory
+if [ -d "/rootfs/mt-os-apps" ]; then
+    cp -rf /rootfs/mt-os-apps/* /opt/mt-os/
+elif [ -d "./rootfs/mt-os-apps" ]; then
+    cp -rf ./rootfs/mt-os-apps/* /opt/mt-os/
+fi
 chmod +x /opt/mt-os/*.sh /opt/mt-os/*.py 2>/dev/null || true
 
 for f in /mt-os-services/*.service; do test -f "$f" && cp "$f" "/etc/systemd/system/"; done
@@ -71,13 +76,17 @@ echo "{}" > /etc/mt-os/ghost-commands.json
 chmod 666 /etc/mt-os/ghost-commands.json
 
 # Install update tools
-test -f /rootfs/update-checker.sh && cp /rootfs/update-checker.sh /opt/mt-os/
+# Check both /rootfs and local rootfs directory
+ROOTFS_DIR="/rootfs"
+[ ! -d "$ROOTFS_DIR" ] && ROOTFS_DIR="./rootfs"
+
+test -f "$ROOTFS_DIR/update-checker.sh" && cp "$ROOTFS_DIR/update-checker.sh" /opt/mt-os/
 chmod +x /opt/mt-os/update-checker.sh 2>/dev/null || true
 
-test -f /rootfs/update-os.sh && cp /rootfs/update-os.sh /usr/local/bin/update-os
+test -f "$ROOTFS_DIR/update-os.sh" && cp "$ROOTFS_DIR/update-os.sh" /usr/local/bin/update-os
 chmod +x /usr/local/bin/update-os 2>/dev/null || true
 # Ensure update-os is also in /opt/mt-os for consistency
-cp /rootfs/update-os.sh /opt/mt-os/update-os.sh
+cp "$ROOTFS_DIR/update-os.sh" /opt/mt-os/update-os.sh
 chmod +x /opt/mt-os/update-os.sh
 
 echo "Setup complete."
