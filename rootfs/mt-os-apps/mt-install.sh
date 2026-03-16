@@ -12,23 +12,46 @@ parted -s "$DISK" mkpart primary ext4 1MiB 512MiB
 parted -s "$DISK" mkpart primary ext4 512MiB 5000MiB
 parted -s "$DISK" mkpart primary ext4 5000MiB 100%
 parted -s "$DISK" set 1 boot on
-P1="${DISK}1"; P2="${DISK}2"; P3="${DISK}3"
-echo "$DISK" | grep -q nvme && P1="${DISK}p1" && P2="${DISK}p2" && P3="${DISK}p3"
-mkfs.ext4 -F -L boot "$P1"
-mkfs.ext4 -F -L MT-OS "$P2"
-mkfs.ext4 -F -L persistence "$P3"
+# Wait for partitions to be recognized
+sleep 2
+# Robust partition naming
+if [[ "$DISK" == *nvme* ]] || [[ "$DISK" == *mmcblk* ]]; then
+    P1="${DISK}p1"; P2="${DISK}p2"; P3="${DISK}p3"
+else
+    P1="${DISK}1"; P2="${DISK}2"; P3="${DISK}3"
+fi
+
+echo "Formatting partitions..."
+mkfs.ext4 -F -L boot "$P1" || { echo "Failed to format $P1"; exit 1; }
+mkfs.ext4 -F -L MT-OS "$P2" || { echo "Failed to format $P2"; exit 1; }
+mkfs.ext4 -F -L persistence "$P3" || { echo "Failed to format $P3"; exit 1; }
 mkdir -p /mnt/mt-live /mnt/mt-persist
-mount "$P2" /mnt/mt-live
+mount "$P2" /mnt/mt-live || { echo "Failed to mount $P2"; exit 1; }
+echo "Copying files (this may take a while)..."
 rsync -ax --progress \
   --exclude=/proc --exclude=/sys --exclude=/dev \
   --exclude=/run --exclude=/mnt --exclude=/media \
+  --exclude=/tmp/* --exclude=/var/tmp/* \
   / /mnt/mt-live/
-mkdir -p /mnt/mt-live/{proc,sys,dev,run,mnt,media}
+
+mkdir -p /mnt/mt-live/{proc,sys,dev,run,mnt,media,boot}
 for d in dev dev/pts proc sys; do mount --bind /$d /mnt/mt-live/$d; done
+
 # Ensure /boot is mounted before grub-install
-mount "$P1" /mnt/mt-live/boot
-chroot /mnt/mt-live grub-install --target=i386-pc "$DISK"
+mount "$P1" /mnt/mt-live/boot || { echo "Failed to mount $P1 to /boot"; exit 1; }
+
+echo "Installing bootloader..."
+# Force i386-pc for older 32-bit BIOS systems
+chroot /mnt/mt-live grub-install --target=i386-pc --force "$DISK"
 chroot /mnt/mt-live update-grub
+
+# Ensure the kernel is present in the new system
+if [ ! -f /mnt/mt-live/boot/vmlinuz* ]; then
+    echo "Warning: No kernel found in /boot. Reinstalling kernel..."
+    chroot /mnt/mt-live apt-get update
+    chroot /mnt/mt-live apt-get install -y linux-image-686
+fi
+
 umount /mnt/mt-live/boot
 UUID=$(blkid -s UUID -o value "$P2")
 echo "UUID=$UUID / ext4 errors=remount-ro 0 1" > /mnt/mt-live/etc/fstab
