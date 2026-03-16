@@ -42,7 +42,7 @@ fi
 # 3. Cleanup
 rm -rf $TEMP_DIR
 # Ensure all scripts and python files are executable
-sudo chmod +x /opt/mt-os/*.sh /opt/mt-os/*.py /usr/local/bin/update-os 2>/dev/null
+sudo chmod +x /opt/mt-os/*.sh /opt/mt-os/*.py /usr/local/bin/update-os /home/ghost/.config/openbox/autostart 2>/dev/null
 sudo chown -R ghost:ghost /home/ghost /opt/mt-os
 
 echo "--- Update Complete! ---"
