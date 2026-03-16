@@ -58,6 +58,8 @@ apt-get install -y --no-install-recommends --fix-missing \
         python3-pil zlib1g-dev libjpeg-dev
     }
 
+# Ensure build tools are recognized before pip installation
+export PATH=$PATH:/usr/bin
 pip3 install --no-cache-dir requests speechrecognition pyttsx3 psutil
 
 # User setup
