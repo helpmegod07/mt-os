@@ -52,6 +52,12 @@ fi
 sudo mkdir -p /etc/mt-os
 echo "$REMOTE_HASH" | sudo tee /etc/mt-os/version > /dev/null
 
+# Ensure systemd services are enabled and reloaded
+if [ -d "/etc/systemd/system" ]; then
+    sudo systemctl daemon-reload
+    sudo systemctl enable mt-ai-daemon.service 2>/dev/null || true
+fi
+
 # 3. Cleanup
 rm -rf $TEMP_DIR
 # Ensure all scripts and python files are executable

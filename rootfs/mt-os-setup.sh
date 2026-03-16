@@ -108,7 +108,10 @@ if [ -d "/mt-os-services" ]; then
         test -f "$f" && cp "$f" "/etc/systemd/system/"
     done
 fi
-systemctl enable mt-ai-daemon.service 2>/dev/null || true
+# Fix potential systemctl issue in chroot
+if [ -f "/etc/systemd/system/mt-ai-daemon.service" ]; then
+    systemctl enable mt-ai-daemon.service 2>/dev/null || true
+fi
 
 # Configuration file copying
 mkdir -p /home/ghost/.config/openbox

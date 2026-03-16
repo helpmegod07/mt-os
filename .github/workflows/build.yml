@@ -47,6 +47,7 @@ jobs:
         sudo mount --bind /dev/pts /tmp/chroot/dev/pts
         sudo mount --bind /proc    /tmp/chroot/proc
         sudo mount --bind /sys     /tmp/chroot/sys
+        sudo cp /etc/resolv.conf /tmp/chroot/etc/resolv.conf
         sudo chroot /tmp/chroot /bin/bash /mt-os-setup.sh
         sudo mkdir -p /tmp/chroot/usr/share/themes/MT-OS/openbox-3
         sudo cp rootfs/mt-os-config/themerc /tmp/chroot/usr/share/themes/MT-OS/openbox-3/themerc
