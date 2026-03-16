@@ -22,7 +22,7 @@ apt-get install -y --no-install-recommends --fix-missing \
     linux-image-686 live-boot systemd systemd-sysv \
     udev dbus network-manager sudo passwd \
     bash vim nano less \
-    xorg openbox lxpanel feh \
+    xorg openbox lxpanel feh pcmanfm \
     lightdm lightdm-gtk-greeter \
     xterm python3 python3-pip python3-tk \
     espeak espeak-ng \
@@ -30,7 +30,7 @@ apt-get install -y --no-install-recommends --fix-missing \
     firefox-esr picom fonts-noto \
     grub-pc grub-common parted dosfstools \
     x11-xserver-utils arandr wget curl git \
-    iproute2 net-tools htop ca-certificates \
+    iproute2 net-tools htop conky ca-certificates \
     portaudio19-dev python3-pyaudio \
     dunst libnotify-bin \
     tzdata ntpdate \
@@ -41,7 +41,7 @@ apt-get install -y --no-install-recommends --fix-missing \
         linux-image-686 live-boot systemd systemd-sysv \
         udev dbus network-manager sudo passwd \
         bash vim nano less \
-        xorg openbox lxpanel \
+        xorg openbox lxpanel pcmanfm \
         lightdm lightdm-gtk-greeter \
         xterm python3 python3-pip python3-tk \
         espeak espeak-ng \
@@ -49,7 +49,7 @@ apt-get install -y --no-install-recommends --fix-missing \
         firefox-esr picom fonts-noto \
         grub-pc grub-common parted dosfstools \
         x11-xserver-utils arandr wget curl git \
-        iproute2 net-tools htop ca-certificates \
+        iproute2 net-tools htop conky ca-certificates \
         portaudio19-dev python3-pyaudio \
         dunst libnotify-bin \
         tzdata ntpdate \

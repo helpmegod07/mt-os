@@ -2,7 +2,9 @@
 <openbox_menu xmlns="http://openbox.org/3.4/menu">
 <menu id="root-menu" label="MT-OS">
   <item label="Ghost Terminal"><action name="Execute"><command>python3 /opt/mt-os/mt-terminal.py</command></action></item>
-  <item label="AI Face"><action name="Execute"><command>python3 /opt/mt-os/mt-face.py</command></action></item>
+      <item label="AI Face"><action name="Execute"><command>python3 /opt/mt-os/mt-face.py</command></action></item>
+      <item label="File Manager"><action name="Execute"><command>pcmanfm</command></action></item>
+      <item label="System Monitor (htop)"><action name="Execute"><command>xterm -e htop</command></action></item>
   <item label="Firefox"><action name="Execute"><command>firefox-esr</command></action></item>
   <separator/>
   <item label="API Key"><action name="Execute"><command>xterm -e bash /opt/mt-os/mt-apikey.sh</command></action></item>
