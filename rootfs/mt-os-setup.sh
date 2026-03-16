@@ -11,10 +11,14 @@ deb http://deb.debian.org/debian bullseye main contrib non-free
 deb http://security.debian.org/debian-security bullseye-security main
 SOURCES
 
-apt-get update -qq
+# Robust apt-get update with retries
+for i in {1..5}; do
+    apt-get update -qq && break || { echo "Update failed, retrying in 5s..."; sleep 5; }
+done
 
-# Install all required packages
-apt-get install -y --no-install-recommends \
+# Install all required packages with robust error handling
+echo "Installing packages (this may take a while, handling network errors)..."
+apt-get install -y --no-install-recommends --fix-missing \
     linux-image-686 live-boot systemd systemd-sysv \
     udev dbus network-manager sudo passwd \
     bash vim nano less \
@@ -29,7 +33,26 @@ apt-get install -y --no-install-recommends \
     iproute2 net-tools htop ca-certificates \
     portaudio19-dev python3-pyaudio \
     dunst libnotify-bin \
-    python3-pil zlib1g-dev libjpeg-dev
+    python3-pil zlib1g-dev libjpeg-dev || {
+    echo "First attempt failed, retrying with --fix-missing..."
+    sleep 10
+    apt-get install -y --no-install-recommends --fix-missing \
+        linux-image-686 live-boot systemd systemd-sysv \
+        udev dbus network-manager sudo passwd \
+        bash vim nano less \
+        xorg openbox lxpanel \
+        lightdm lightdm-gtk-greeter \
+        xterm python3 python3-pip python3-tk \
+        espeak espeak-ng \
+        pulseaudio pulseaudio-utils alsa-utils \
+        firefox-esr picom fonts-noto \
+        grub-pc grub-common parted dosfstools \
+        x11-xserver-utils arandr wget curl git \
+        iproute2 net-tools htop ca-certificates \
+        portaudio19-dev python3-pyaudio \
+        dunst libnotify-bin \
+        python3-pil zlib1g-dev libjpeg-dev
+}
 
 pip3 install --no-cache-dir anthropic speechrecognition pyttsx3 requests
 
