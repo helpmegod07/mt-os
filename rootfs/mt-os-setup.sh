@@ -48,4 +48,12 @@ chmod +x /opt/mt-os/set-wallpaper.sh 2>/dev/null || true
 chown -R ghost:ghost /home/ghost
 echo "{}" > /etc/mt-os/ghost-commands.json
 chmod 666 /etc/mt-os/ghost-commands.json
+# ... (existing code above)
+
+# Install the update command
+# This copies the script you created to a global folder so you can run it anywhere
+sudo cp /rootfs/update-os.sh /usr/local/bin/update-os
+sudo chmod +x /usr/local/bin/update-os
+
 echo "Setup complete."
+
