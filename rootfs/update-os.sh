@@ -1,5 +1,11 @@
 #!/bin/bash
 set -euo pipefail
+
+# Ensure the script is run with sudo
+if [ "$EUID" -ne 0 ]; then
+    echo "Please run with sudo: sudo update-os"
+    exit 1
+fi
 # MT-OS Self-Update Script
 # Enhanced for reliable updates from GitHub
 
@@ -12,9 +18,15 @@ echo "=========================================="
 echo ""
 
 # 1. Clone the latest code
+# Ensure git is installed
+if ! command -v git &> /dev/null; then
+    echo "Git is not installed. Installing..."
+    sudo apt-get update -qq && sudo apt-get install -y -qq git
+fi
+
 echo "Fetching latest changes from GitHub..."
-sudo rm -rf $TEMP_DIR
-if ! git clone --depth 1 $REPO_URL $TEMP_DIR; then
+sudo rm -rf "$TEMP_DIR"
+if ! git clone --depth 1 "$REPO_URL" "$TEMP_DIR"; then
     echo "Error: Could not connect to GitHub. Please check your internet connection."
     read -r -p "Press Enter to exit..."
     exit 1
