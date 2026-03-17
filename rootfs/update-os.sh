@@ -1,4 +1,5 @@
 #!/bin/bash
+set -euo pipefail
 # MT-OS Self-Update Script
 # Enhanced for reliable updates from GitHub
 
@@ -13,11 +14,9 @@ echo ""
 # 1. Clone the latest code
 echo "Fetching latest changes from GitHub..."
 sudo rm -rf $TEMP_DIR
-git clone --depth 1 $REPO_URL $TEMP_DIR
-
-if [ $? -ne 0 ]; then
+if ! git clone --depth 1 $REPO_URL $TEMP_DIR; then
     echo "Error: Could not connect to GitHub. Please check your internet connection."
-    read -p "Press Enter to exit..."
+    read -r -p "Press Enter to exit..."
     exit 1
 fi
 
@@ -102,4 +101,4 @@ echo "The latest fixes for the installer and system"
 echo "have been applied. You can now run 'mt-install'"
 echo "to begin the installation to your laptop."
 echo "=========================================="
-read -p "Press Enter to exit..."
+read -r -p "Press Enter to exit..."

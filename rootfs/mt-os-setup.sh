@@ -1,5 +1,5 @@
 #!/bin/bash
-set -e
+set -euo pipefail
 export DEBIAN_FRONTEND=noninteractive
 
 # Fix hostname and sudo resolution
@@ -12,9 +12,21 @@ deb http://security.debian.org/debian-security bullseye-security main
 SOURCES
 
 # Robust apt-get update with retries
-for i in {1..5}; do
-    apt-get update -qq && break || { echo "Update failed, retrying in 5s..."; sleep 5; }
+UPDATE_SUCCESS=false
+for _ in {1..5}; do
+    if apt-get update -qq; then
+        UPDATE_SUCCESS=true
+        break
+    else
+        echo "Update failed, retrying in 5s..."
+        sleep 5
+    fi
 done
+
+if [ "$UPDATE_SUCCESS" = "false" ]; then
+    echo "Error: Failed to update package lists after multiple attempts."
+    exit 1
+fi
 
 # Install all required packages with robust error handling
 echo "Installing packages (this may take a while, handling network errors)..."
@@ -41,7 +53,7 @@ apt-get install -y --no-install-recommends --fix-missing \
     python3-pil zlib1g-dev libjpeg-dev || {
     echo "First attempt failed, retrying with --fix-missing..."
     sleep 10
-    apt-get install -y --no-install-recommends --fix-missing \
+    if ! apt-get install -y --no-install-recommends --fix-missing \
         linux-image-686 live-boot systemd systemd-sysv \
         udev dbus network-manager sudo passwd \
         bash vim nano less \
@@ -61,8 +73,11 @@ apt-get install -y --no-install-recommends --fix-missing \
         tzdata ntpdate \
         build-essential python3-dev \
         gcc-i686-linux-gnu g++-i686-linux-gnu \
-        python3-pil zlib1g-dev libjpeg-dev
-    }
+        python3-pil zlib1g-dev libjpeg-dev; then
+        echo "Error: Failed to install core packages."
+        exit 1
+    fi
+}
 
 # Ensure build tools are recognized and used before pip installation
 export PATH=$PATH:/usr/bin

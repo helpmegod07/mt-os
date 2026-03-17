@@ -1,5 +1,5 @@
 #!/bin/bash
-set -e
+set -euo pipefail
 
 # Ensure disk tools in /sbin and /usr/sbin are in the PATH
 export PATH=$PATH:/sbin:/usr/sbin:/usr/local/sbin
@@ -10,7 +10,7 @@ error_handler() {
     echo ""
     echo "!!! ERROR: Installation failed at line $1 !!!"
     echo "Check the messages above for details."
-    read -p "Press Enter to exit..."
+    read -r -p "Press Enter to exit..."
     exit 1
 }
 trap 'error_handler $LINENO' ERR
@@ -24,7 +24,7 @@ echo ""
 MISSING_TOOLS=()
 for tool in parted mkfs.ext4 rsync blkid wipefs; do
     if ! command -v $tool &> /dev/null; then
-        MISSING_TOOLS+=($tool)
+        MISSING_TOOLS+=("$tool")
     fi
 done
 
@@ -50,7 +50,7 @@ if [ ${#MISSING_TOOLS[@]} -ne 0 ]; then
     else
         echo "Error: Failed to install missing tools automatically."
         echo "Please ensure you have an internet connection and run: sudo apt-get update && sudo apt-get install -y parted rsync e2fsprogs util-linux"
-        read -p "Press Enter to exit..."
+        read -r -p "Press Enter to exit..."
         exit 1
     fi
 fi
@@ -59,21 +59,21 @@ echo ""
 echo "Available disks:"
 lsblk -d -o NAME,SIZE,MODEL
 echo ""
-read -p "Target disk (e.g. sda, nvme0n1): " DISK_INPUT
+read -r -p "Target disk (e.g. sda, nvme0n1): " DISK_INPUT
 DISK="/dev/$DISK_INPUT"
 if [ ! -b "$DISK" ]; then
     echo "Error: Disk $DISK not found."
-    read -p "Press Enter to exit..."
+    read -r -p "Press Enter to exit..."
     exit 1
 fi
 
 echo ""
 echo "WARNING: This will ERASE all data on $DISK"
-read -p "ERASE $DISK? Type YES to confirm: " CONFIRM
+read -r -p "ERASE $DISK? Type YES to confirm: " CONFIRM
 CONFIRM_UPPER=$(echo "$CONFIRM" | tr '[:lower:]' '[:upper:]')
 if [ "$CONFIRM_UPPER" != "YES" ]; then
     echo "Aborted by user."
-    read -p "Press Enter to exit..."
+    read -r -p "Press Enter to exit..."
     exit 0
 fi
 
@@ -189,7 +189,7 @@ fi
 if ! ls /mnt/mt-live/boot/vmlinuz* >/dev/null 2>&1; then
     echo "!!! CRITICAL ERROR: No kernel found in /boot after installation attempts !!!"
     echo "The system will not be able to boot."
-    read -p "Press Enter to exit..."
+    read -r -p "Press Enter to exit..."
     exit 1
 fi
 
@@ -212,8 +212,8 @@ sudo chroot /mnt/mt-live grub-install --target=i386-pc --force "$DISK"
 
 # Create a manual grub.cfg that is robust
 echo "Configuring GRUB..."
-KERNEL_PATH=$(ls /mnt/mt-live/boot/vmlinuz* 2>/dev/null | head -n 1)
-INITRD_PATH=$(ls /mnt/mt-live/boot/initrd.img* 2>/dev/null | head -n 1)
+KERNEL_PATH=$(find /mnt/mt-live/boot -maxdepth 1 -name "vmlinuz*" 2>/dev/null | head -n 1)
+INITRD_PATH=$(find /mnt/mt-live/boot -maxdepth 1 -name "initrd.img*" 2>/dev/null | head -n 1)
 
 KERNEL_FILE=$(basename "$KERNEL_PATH")
 INITRD_FILE=$(basename "$INITRD_PATH")
@@ -298,4 +298,4 @@ echo ""
 echo "MT-OS has been successfully installed to $DISK"
 echo "Please remove your installation media and reboot."
 echo "=========================================="
-read -p "Press Enter to exit..."
+read -r -p "Press Enter to exit..."
