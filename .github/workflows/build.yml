@@ -20,6 +20,14 @@ jobs:
         sudo apt-get install -y debootstrap squashfs-tools xorriso \
           grub-pc-bin grub-efi-ia32-bin rsync mtools --no-install-recommends
 
+    - name: Free disk space
+      run: |
+        sudo rm -rf /usr/share/dotnet
+        sudo rm -rf /usr/local/lib/android
+        sudo rm -rf /opt/ghc
+        sudo rm -rf "/usr/local/share/boost"
+        sudo rm -rf "$AGENT_TOOLSDIRECTORY"
+
     - name: Bootstrap Debian i386
       run: |
         sudo mkdir -p /tmp/chroot
@@ -59,8 +67,11 @@ jobs:
     - name: Build squashfs
       run: |
         sudo mkdir -p /tmp/image/live
+        # Clean up unnecessary files before building squashfs to save space
+        sudo chroot /tmp/chroot apt-get clean
+        sudo rm -rf /tmp/chroot/var/lib/apt/lists/*
         sudo mksquashfs /tmp/chroot /tmp/image/live/filesystem.squashfs \
-          -comp gzip -e boot -noappend -no-recovery
+          -comp xz -b 1M -noappend -no-recovery -e boot
 
     - name: Copy kernel and grub
       run: |
