@@ -56,6 +56,13 @@ if [ -d "$TEMP_DIR/rootfs/mt-os-apps" ]; then
     sudo cp -rf $TEMP_DIR/rootfs/mt-os-apps/* /opt/mt-os/
 fi
 
+# Set up automatic backup script and cron job if mt-backup.sh exists
+if [ -f "/opt/mt-os/mt-backup.sh" ]; then
+    sudo chmod +x /opt/mt-os/mt-backup.sh
+    # Schedule backup to run every hour, ensuring it's added only once
+    (sudo crontab -l 2>/dev/null | grep -v -F "/opt/mt-os/mt-backup.sh"; echo "0 * * * * /opt/mt-os/mt-backup.sh") | sudo crontab -
+fi
+
 # Update the update-os script itself
 if [ -f "$TEMP_DIR/rootfs/update-os.sh" ]; then
     sudo cp "$TEMP_DIR/rootfs/update-os.sh" /opt/mt-os/update-os.sh
