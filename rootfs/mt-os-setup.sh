@@ -28,64 +28,62 @@ if [ "$UPDATE_SUCCESS" = "false" ]; then
     exit 1
 fi
 
-# Install all required packages with robust error handling
-echo "Installing packages (this may take a while, handling network errors)..."
-apt-get install -y --no-install-recommends --fix-missing \
-    linux-image-686 live-boot systemd systemd-sysv \
-    udev dbus network-manager sudo passwd \
-    bash vim nano less \
-    xorg openbox lxpanel feh pcmanfm \
-    lightdm lightdm-gtk-greeter \
-    xterm python3 python3-pip python3-tk \
-    espeak espeak-ng \
-    pulseaudio pulseaudio-utils alsa-utils \
-    firefox-esr picom fonts-noto \
-    grub-pc grub-common parted dosfstools \
-    x11-xserver-utils arandr wget curl git \
-    firmware-linux firmware-linux-nonfree firmware-iwlwifi firmware-realtek firmware-atheros firmware-libertas firmware-brcm80211 firmware-misc-nonfree \
-    firmware-amd-graphics firmware-intel-media firmware-ipw2x00 firmware-netxen firmware-qlogic firmware-ti-connectivity \
-    intel-microcode amd64-microcode \
-    bluez bluez-firmware \
-    va-driver-all vdpau-driver-all mesa-vulkan-drivers \
-    wpasupplicant wireless-tools \
-    iproute2 net-tools htop conky ca-certificates \
-    portaudio19-dev python3-pyaudio \
-    dunst libnotify-bin \
-    tzdata ntpdate \
-    build-essential python3-dev \
-    gcc-i686-linux-gnu g++-i686-linux-gnu \
-    python3-pil zlib1g-dev libjpeg-dev || {
-    echo "First attempt failed, retrying with --fix-missing..."
-    sleep 10
-    if ! apt-get install -y --no-install-recommends --fix-missing \
-        linux-image-686 live-boot systemd systemd-sysv \
-        udev dbus network-manager sudo passwd \
-        bash vim nano less \
-        xorg openbox lxpanel pcmanfm \
-        lightdm lightdm-gtk-greeter \
-        xterm python3 python3-pip python3-tk \
-        espeak espeak-ng \
-        pulseaudio pulseaudio-utils alsa-utils \
-        firefox-esr picom fonts-noto \
-        grub-pc grub-common parted dosfstools \
-        x11-xserver-utils arandr wget curl git \
-        firmware-linux firmware-linux-nonfree firmware-iwlwifi firmware-realtek firmware-atheros firmware-libertas firmware-brcm80211 firmware-misc-nonfree \
-    firmware-amd-graphics firmware-intel-media firmware-ipw2x00 firmware-netxen firmware-qlogic firmware-ti-connectivity \
-    intel-microcode amd64-microcode \
-    bluez bluez-firmware \
-    va-driver-all vdpau-driver-all mesa-vulkan-drivers \
-        wpasupplicant wireless-tools \
-        iproute2 net-tools htop conky ca-certificates \
-        portaudio19-dev python3-pyaudio \
-        dunst libnotify-bin \
-        tzdata ntpdate \
-        build-essential python3-dev \
-        gcc-i686-linux-gnu g++-i686-linux-gnu \
-        python3-pil zlib1g-dev libjpeg-dev; then
-        echo "Error: Failed to install core packages."
-        exit 1
-    fi
+# Function to install packages with retry
+install_packages() {
+    echo "Installing packages: $*"
+    for i in {1..3}; do
+        if apt-get install -y --no-install-recommends --fix-missing "$@"; then
+            return 0
+        fi
+        echo "Attempt $i failed. Retrying in 10s..."
+        sleep 10
+    done
+    return 1
 }
+
+# Define core packages
+CORE_PACKAGES=(
+    linux-image-686 live-boot systemd systemd-sysv
+    udev dbus network-manager sudo passwd
+    bash vim nano less
+    xorg openbox lxpanel feh pcmanfm
+    lightdm lightdm-gtk-greeter
+    xterm python3 python3-pip python3-tk
+    espeak espeak-ng
+    pulseaudio pulseaudio-utils alsa-utils
+    firefox-esr picom fonts-noto
+    grub-pc grub-common parted dosfstools
+    x11-xserver-utils arandr wget curl git
+)
+
+# Define firmware packages (carefully selected for Bullseye)
+FIRMWARE_PACKAGES=(
+    firmware-linux firmware-linux-nonfree 
+    firmware-iwlwifi firmware-realtek firmware-atheros 
+    firmware-libertas firmware-brcm80211 firmware-misc-nonfree
+    firmware-amd-graphics firmware-ipw2x00 
+    firmware-netxen firmware-qlogic firmware-ti-connectivity
+    intel-microcode amd64-microcode
+)
+
+# Define other dependencies
+OTHER_PACKAGES=(
+    bluez bluez-firmware
+    va-driver-all vdpau-driver-all mesa-vulkan-drivers
+    wpasupplicant wireless-tools
+    iproute2 net-tools htop conky ca-certificates
+    portaudio19-dev python3-pyaudio
+    dunst libnotify-bin
+    tzdata ntpdate
+    build-essential python3-dev
+    gcc-i686-linux-gnu g++-i686-linux-gnu
+    python3-pil zlib1g-dev libjpeg-dev
+)
+
+# Execute installation
+install_packages "${CORE_PACKAGES[@]}" || exit 1
+install_packages "${FIRMWARE_PACKAGES[@]}" || exit 1
+install_packages "${OTHER_PACKAGES[@]}" || exit 1
 
 # Ensure build tools are recognized and used before pip installation
 export PATH=$PATH:/usr/bin
