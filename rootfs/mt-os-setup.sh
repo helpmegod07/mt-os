@@ -43,6 +43,10 @@ apt-get install -y --no-install-recommends --fix-missing \
     grub-pc grub-common parted dosfstools \
     x11-xserver-utils arandr wget curl git \
     firmware-linux firmware-linux-nonfree firmware-iwlwifi firmware-realtek firmware-atheros firmware-libertas firmware-brcm80211 firmware-misc-nonfree \
+    firmware-amd-graphics firmware-intel-media firmware-ipw2x00 firmware-netxen firmware-qlogic firmware-ti-connectivity \
+    intel-microcode amd64-microcode \
+    bluez bluez-firmware \
+    va-driver-all vdpau-driver-all mesa-vulkan-drivers \
     wpasupplicant wireless-tools \
     iproute2 net-tools htop conky ca-certificates \
     portaudio19-dev python3-pyaudio \
@@ -66,6 +70,10 @@ apt-get install -y --no-install-recommends --fix-missing \
         grub-pc grub-common parted dosfstools \
         x11-xserver-utils arandr wget curl git \
         firmware-linux firmware-linux-nonfree firmware-iwlwifi firmware-realtek firmware-atheros firmware-libertas firmware-brcm80211 firmware-misc-nonfree \
+    firmware-amd-graphics firmware-intel-media firmware-ipw2x00 firmware-netxen firmware-qlogic firmware-ti-connectivity \
+    intel-microcode amd64-microcode \
+    bluez bluez-firmware \
+    va-driver-all vdpau-driver-all mesa-vulkan-drivers \
         wpasupplicant wireless-tools \
         iproute2 net-tools htop conky ca-certificates \
         portaudio19-dev python3-pyaudio \
