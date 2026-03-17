@@ -101,13 +101,13 @@ echo "Creating partition table (MBR)..."
 sudo parted -s "$DISK" mklabel msdos
 
 echo "Creating boot partition (512 MB)..."
-sudo parted -s "$DISK" mkpart primary ext4 1MiB 512MiB
+sudo parted -s "$DISK" mkpart primary 1MiB 512MiB
 
 echo "Creating root partition (5 GB)..."
-sudo parted -s "$DISK" mkpart primary ext4 512MiB 5000MiB
+sudo parted -s "$DISK" mkpart primary 512MiB 5000MiB
 
 echo "Creating persistence partition (remaining space)..."
-sudo parted -s "$DISK" mkpart primary ext4 5000MiB 100%
+sudo parted -s "$DISK" mkpart primary 5000MiB 100%
 
 echo "Setting boot flag..."
 sudo parted -s "$DISK" set 1 boot on
