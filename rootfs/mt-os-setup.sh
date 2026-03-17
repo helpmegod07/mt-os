@@ -126,6 +126,13 @@ if [ -d "/mt-os-apps" ]; then
 fi
 chmod +x /opt/mt-os/*.sh /opt/mt-os/*.py 2>/dev/null || true
 
+# Set up automatic backup script and cron job
+if [ -f "/opt/mt-os/mt-backup.sh" ]; then
+    chmod +x /opt/mt-os/mt-backup.sh
+    # Schedule backup to run every hour
+    (crontab -l 2>/dev/null; echo "0 * * * * /opt/mt-os/mt-backup.sh") | crontab -
+fi
+
 if [ -d "/mt-os-services" ]; then
     for f in /mt-os-services/*.service; do 
         test -f "$f" && cp "$f" "/etc/systemd/system/"
